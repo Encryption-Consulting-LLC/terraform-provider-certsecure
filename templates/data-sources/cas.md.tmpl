@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Lists the CAs the provider's token may enroll from in CertSecure.
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage
+
+{{ tffile "examples/data-sources/certsecure_cas/data-source.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}

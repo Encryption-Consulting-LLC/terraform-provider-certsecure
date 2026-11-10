@@ -1,0 +1,16 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Lists the certificate templates available on a CA in CertSecure.
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage
+
+{{ tffile "examples/data-sources/certsecure_templates/data-source.tf" }}
+
+{{ .SchemaMarkdown | trimspace }}

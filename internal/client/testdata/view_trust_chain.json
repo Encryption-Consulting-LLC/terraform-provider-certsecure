@@ -1,0 +1,114 @@
+[
+  {
+    "aki": null,
+    "common_name": "Example Root CA",
+    "crl_distribution_points": [],
+    "fingerprints": {
+      "sha256": "800579abe965a49afe0c98ce63ab1668c5f087b902ce6c859f9c9698422ca4bd"
+    },
+    "is_ca": true,
+    "is_trusted_root": false,
+    "issuer": "Example Root CA (CN=Example Root CA)",
+    "issuer_url": null,
+    "level": "root",
+    "ocsp": null,
+    "path_length": null,
+    "public_key": {
+      "algorithm": "rsaEncryption",
+      "exponent": 65537,
+      "family": "RSA",
+      "size": 2048,
+      "type": "classical"
+    },
+    "self_signed": true,
+    "serial": "24d957450c593cae457714c1019850b2",
+    "signature_algorithm": "sha256WithRSAEncryption",
+    "ski": "d3bc4c056bb12da3233ca5eac3461b5e9b2ce8b5",
+    "status": "active",
+    "subject": "CN=Example Root CA",
+    "valid_from": "Thu, 23 Jul 2026 00:13:33 GMT",
+    "valid_to": "Mon, 23 Jul 2046 00:23:32 GMT"
+  },
+  {
+    "aki": "d3bc4c056bb12da3233ca5eac3461b5e9b2ce8b5",
+    "common_name": "Example Issuing CA",
+    "crl_distribution_points": [
+      "ldap:///CN=Example%20Root%20CA,CN=CA-HOST,CN=CDP,CN=Public%20Key%20Services,CN=Services,CN=Configuration,DC=example,DC=com?certificateRevocationList?base?objectClass=cRLDistributionPoint",
+      "http://pki.example.com/CertEnroll/Example%20Root%20CA.crl"
+    ],
+    "fingerprints": {
+      "sha256": "fb9d98956c1f6e9bb8f1112cab9796a2e12d73d243f0c2c3ace9ca077efabcfa"
+    },
+    "is_ca": true,
+    "is_trusted_root": false,
+    "issuer": "Example Root CA (CN=Example Root CA)",
+    "issuer_url": "http://pki.example.com/CertEnroll/CA-HOST_Example%20Root%20CA.crt",
+    "level": "intermediate",
+    "ocsp": null,
+    "path_length": null,
+    "public_key": {
+      "algorithm": "rsaEncryption",
+      "exponent": 65537,
+      "family": "RSA",
+      "size": 2048,
+      "type": "classical"
+    },
+    "revocation": {
+      "checked_at": "2026-10-21T19:08:19.353918+00:00",
+      "detail": "The certificate publishes no OCSP responder. The CRL could not be downloaded: HTTPSConnectionPool(host='pki.example.com', port=443): Read timed out. (read timeout=20)",
+      "reason": null,
+      "revoked_at": null,
+      "source": null,
+      "status": "unknown"
+    },
+    "self_signed": false,
+    "serial": "2700000002d01f55c20c1eb8c4000000000002",
+    "signature_algorithm": "sha256WithRSAEncryption",
+    "ski": "ee78decd4fabc3720d3810ae8ccdd82c6e66478a",
+    "status": "active",
+    "subject": "CN=Example Issuing CA,DC=example,DC=com",
+    "valid_from": "Thu, 23 Jul 2026 01:03:08 GMT",
+    "valid_to": "Wed, 23 Jul 2036 01:13:08 GMT"
+  },
+  {
+    "aki": "ee78decd4fabc3720d3810ae8ccdd82c6e66478a",
+    "common_name": "test-csr1024",
+    "crl_distribution_points": [
+      "ldap:///CN=Example%20Issuing%20CA,CN=CA-HOST,CN=CDP,CN=Public%20Key%20Services,CN=Services,CN=Configuration,DC=example,DC=com?certificateRevocationList?base?objectClass=cRLDistributionPoint",
+      "http://pki.example.com/CertEnroll/Example%20Issuing%20CA.crl"
+    ],
+    "fingerprints": {
+      "sha256": "ef7f587fee32887bc98f5dd788ff94fc6f10383e07cd5e1b6d130170a4475b17"
+    },
+    "is_ca": null,
+    "is_trusted_root": false,
+    "issuer": "Example Issuing CA (CN=Example Issuing CA,DC=example,DC=com)",
+    "issuer_url": "http://pki.example.com/CertEnroll/pki.example.com_Example%20Issuing%20CA.crt",
+    "level": "leaf",
+    "ocsp": "http://pki.example.com/ocsp",
+    "path_length": null,
+    "public_key": {
+      "algorithm": "rsaEncryption",
+      "exponent": 65537,
+      "family": "RSA",
+      "size": 1024,
+      "type": "classical"
+    },
+    "revocation": {
+      "checked_at": "2026-10-21T19:07:59.226887+00:00",
+      "detail": "The OCSP responder answered HTTP 525. The CRL could not be downloaded: HTTPSConnectionPool(host='pki.example.com', port=443): Read timed out. (read timeout=20)",
+      "reason": null,
+      "revoked_at": null,
+      "source": null,
+      "status": "unknown"
+    },
+    "self_signed": false,
+    "serial": "3400033ba91ed7e549457530e0000000033ba9",
+    "signature_algorithm": "sha256WithRSAEncryption",
+    "ski": "306d7d6247b39cd45c33bfd95bf0032c45ea45c2",
+    "status": "active",
+    "subject": "1.2.840.113549.1.9.1=user@example.com,CN=test-csr1024,OU=IT,O=Example,L=Example City,ST=ST,C=us",
+    "valid_from": "Fri, 18 Sep 2026 12:25:39 GMT",
+    "valid_to": "Sun, 17 Sep 2028 12:25:39 GMT"
+  }
+]

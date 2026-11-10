@@ -1,0 +1,11 @@
+{
+  "IP": "192.0.2.10",
+  "TaskID": "20796",
+  "createdOn": "2026-10-21 20:26:32",
+  "details": "Task is accepted by agent R CA Connector",
+  "status": "R CA Connector has collected the task",
+  "statusInfo": "PROCESSING",
+  "taskName": "Certificate Request: tf-provider-test-pending.example.com",
+  "updatedOn": "2026-10-21 20:26:33",
+  "user": "user@example.com"
+}

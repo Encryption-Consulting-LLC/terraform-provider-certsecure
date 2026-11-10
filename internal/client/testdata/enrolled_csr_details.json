@@ -1,0 +1,30 @@
+{
+  "CertificateAuthority": "Example Issuing CA",
+  "EmailID": [],
+  "EnrollmentID": 1477,
+  "ExpiresOn": "09/17/2028 12:25 PM",
+  "Status": "active",
+  "Template": "WebServer",
+  "certAvailable": true,
+  "certIgnored": false,
+  "city": "Example City",
+  "commonName": "test-csr1024",
+  "country_code": "us",
+  "keyLength": 1024,
+  "organization": "Example",
+  "organizationUnit": "IT",
+  "owner": "user@example.com",
+  "pfxExport": "True",
+  "san": "dns=test-csr1024",
+  "sanDNSNames": [
+    "test-csr1024"
+  ],
+  "sanEmails": [],
+  "sanIPAddresses": [],
+  "state": "ST",
+  "thirdPartyCert": false,
+  "version": "2",
+  "x": [
+    "test-csr1024"
+  ]
+}
