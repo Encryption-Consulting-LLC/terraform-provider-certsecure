@@ -6,10 +6,8 @@
 name: Tests
 
 on:
+  # Every pull request runs the full suite: the checks are required to merge into main.
   pull_request:
-    paths-ignore:
-      - 'README.md'
-      - 'CHANGELOG.md'
   push:
     paths-ignore:
       - 'README.md'
