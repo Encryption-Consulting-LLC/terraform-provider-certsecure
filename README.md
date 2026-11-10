@@ -1,6 +1,6 @@
 # CertSecure Terraform Provider
 
-## Integration status: Development - Not yet published to the Terraform Registry.
+## Integration status: Production - Ready for use in production environments.
 
 ## Overview
 
@@ -114,7 +114,7 @@ Key behaviors (details in the [resource documentation](docs/resources/certificat
 
 ### From the Terraform Registry
 
-Once published, the provider is installed automatically by `terraform init`:
+The provider is installed automatically by `terraform init`:
 
 ```terraform
 terraform {
