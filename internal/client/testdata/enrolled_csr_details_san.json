@@ -1,0 +1,36 @@
+{
+  "CertificateAuthority": "Example Issuing CA",
+  "EmailID": [
+    "user@example.com"
+  ],
+  "EnrollmentID": 1512,
+  "ExpiresOn": "10/21/2028 01:45 AM",
+  "Status": "active",
+  "Template": "WebServer",
+  "certAvailable": true,
+  "certIgnored": false,
+  "city": "",
+  "commonName": "tf-provider-test.example.com",
+  "country_code": "",
+  "keyLength": 2048,
+  "organization": "",
+  "organizationUnit": "",
+  "owner": "user@example.com",
+  "pfxExport": "False",
+  "san": "dns=tf-provider-test.example.com&dns=tf-provider-test2.example.com&ipaddress=192.0.2.10",
+  "sanDNSNames": [
+    "tf-provider-test.example.com",
+    "tf-provider-test2.example.com"
+  ],
+  "sanEmails": [],
+  "sanIPAddresses": [
+    "192.0.2.10"
+  ],
+  "state": "",
+  "thirdPartyCert": false,
+  "version": "2",
+  "x": [
+    "tf-provider-test.example.com",
+    "tf-provider-test2.example.com"
+  ]
+}

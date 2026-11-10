@@ -1,0 +1,170 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Issues a certificate from a CSR through CertSecure.
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+The certificate is issued by the CA behind CertSecure (for example Microsoft CA) using the given template.
+`certificate_pem`, `chain_pem` and the parsed fields (`serial_number`, `not_before`, `not_after`) are set once the
+certificate is issued. CertSecure processes requests asynchronously; the provider waits for issuance up to the
+`create` timeout, for a renewal up to the `update` timeout, and for a revocation up to the `delete` timeout (all
+default to 5 minutes).
+
+## Example Usage
+
+### Minimal CSR enrollment
+
+{{ tffile "examples/resources/certsecure_certificate/resource.tf" }}
+
+### Full CSR enrollment
+
+{{ tffile "examples/resources/certsecure_certificate/resource_full.tf" }}
+
+### Delivery to AWS Certificate Manager
+
+{{ tffile "examples/resources/certsecure_certificate/resource_aws_acm.tf" }}
+
+## Renewal
+
+The certificate is renewed **in place**: the resource keeps its address and Terraform plans an update, not a
+replacement. The provider renews through CertSecure with the CSR in the configuration. CertSecure never generates or
+stores a private key. A renewal happens when:
+
+- **`csr_pem` changes.** The new CSR can be for the same key (for example to add a SAN) or for a new key (key
+  rotation). Whether the destination keeps its identity, for example the ARN of an imported `aws_acm_certificate`,
+  is decided by the destination provider, not by this one.
+- **The certificate expires within `early_renewal_hours`.** On the first plan inside the window, the provider
+  renews with the same CSR, so the renewed certificate is for the same key.
+
+After a renewal, `id`, `enrollment_id`, `task_id`, `certificate_pem`, `chain_pem`, `serial_number`, `not_before` and
+`not_after` describe the new certificate. Resources that reference them update in the same apply. The previous
+certificate is **not revoked**: it stays valid until it expires, because a destination may still be serving it.
+CertSecure records the new certificate as a renewal of the old one and stops expiry alerts for the old one.
+
+Renewals that need approval do not submit twice. If CertSecure requires approval, the apply fails with the task ID
+and `pending_renewal_task_id` records it, while the previous certificate stays in state and in use. Approve or deny
+the request in CertSecure, then run `apply` again: it resumes the same request. If the request was denied, the next
+`apply` submits a new renewal. Changing `csr_pem` again while a renewal is pending is refused until that request is
+approved or denied. The same applies when a renewal does not complete before the `update` timeout.
+
+Things to know:
+
+- **Renewal runs only when Terraform runs.** Nothing renews the certificate between runs, so run `plan`/`apply` on
+  a schedule (for example nightly) with an `early_renewal_hours` window long enough to cover missed runs.
+- **The owner is inherited.** CertSecure keeps the owner of the original certificate. `owner_email` is recorded as a
+  watcher.
+- **Permissions.** The CertSecure user of the API token needs the *Renew Inventory Certificates* permission (or must be
+  the owner or a watcher of the certificate) and *View Enrollment Database*.
+- **Only active and expired certificates can be renewed.** A revoked certificate cannot be renewed; use
+  `terraform apply -replace` to issue a new one.
+- **Other arguments still issue a new certificate.** Changing `ca_name`, `template`, `owner_email`, `tags`, `notes`,
+  `subject_alternative_names` or `override_csr_sans` replaces the resource.
+
+## Revocation on Destroy
+
+By default, destroying the resource only removes the certificate from Terraform state and emits a warning: the
+certificate stays valid in CertSecure. Set `revoke_on_destroy = true` to revoke it instead. The provider then submits
+the revocation to CertSecure and waits, up to the `delete` timeout, until CertSecure reports the certificate as
+revoked.
+
+- **Apply the setting before destroying.** Destroy uses the value in state, so a configuration that sets
+  `revoke_on_destroy = true` must be applied once before `terraform destroy` revokes the certificate. Changing the
+  setting never renews or replaces the certificate.
+- **A replacement revokes the old certificate.** Changing an argument that issues a new certificate (for example
+  `template`) destroys the old one. By default Terraform destroys before it creates, so the old certificate would be
+  revoked while destinations still use it. Add `create_before_destroy`, so the new certificate is issued and passed to
+  the resources that use it before the old one is revoked:
+
+  ```terraform
+  resource "certsecure_certificate" "app" {
+    # ...
+    revoke_on_destroy = true
+
+    lifecycle {
+      create_before_destroy = true
+    }
+  }
+  ```
+- **Renewals never revoke.** After an in-place renewal the previous certificate stays valid until it expires.
+- **Only active certificates are revoked.** A certificate that is already revoked, expired, or no longer in CertSecure
+  is removed from state without a revocation. A request that is still pending or awaits approval cannot be revoked:
+  destroy removes it from state with a warning; deny it in CertSecure. A renewal still pending
+  (`pending_renewal_task_id`) is not cancelled.
+- **Permissions.** The CertSecure user of the API token must be the owner of the certificate (the user that requested
+  it), a department PKI admin for its CA, or a global admin, and needs *View Enrollment Database*.
+- **Failures keep the resource.** If the revocation fails or does not complete before the `delete` timeout, destroy
+  fails and the certificate stays in state. Running destroy again checks the certificate first and does not revoke it
+  twice once an earlier revocation has completed.
+- **No revocation reason.** CertSecure records the CA's default revocation reason.
+
+## Approval and Resuming a New Certificate
+
+If the template requires approval, creation fails with an error that includes the enrollment ID (eid) and task ID.
+The request is saved in state with no certificate yet, and stays in CertSecure where it can be approved or denied.
+The same happens when issuance does not complete before the `create` timeout, or the certificate cannot be
+downloaded.
+
+Terraform marks a resource whose creation failed as *tainted*, and the next `apply` replaces a tainted resource: it
+would submit a new request. To resume the saved request instead, untaint it and apply again:
+
+```shell
+terraform untaint certsecure_certificate.app
+terraform apply
+```
+
+The plan shows an in-place update. The apply waits, up to the `update` timeout, for the saved request and downloads
+its certificate; it does not submit a new request. If the request still awaits approval, the apply fails again and
+the next `apply` resumes it again, with no further untaint.
+
+The resource is replaced, and a new request submitted, instead of resumed when:
+
+- the request was denied or failed in CertSecure, or the certificate it returned is not for the CSR's key;
+- `csr_pem` changed while the request was pending (the pending request is for the previous key).
+
+Deny the old request in CertSecure if it is still awaiting approval. Destroying a resource that has no certificate yet
+removes it from state with a warning and does not cancel the request.
+
+## Important Notes
+
+- **Errors identify the request.** When creation fails after the request was submitted, the error contains the
+  enrollment ID (eid) and task ID so the request can be found, approved, denied or revoked in CertSecure. If the
+  enrollment ID was not known yet, nothing is saved in state and the next `apply` submits a new request.
+- **Protect your state.** A private key generated with the `tls_private_key` resource is stored in Terraform state
+  in plain text. Store state in an encrypted, access-controlled backend, or generate the key and CSR outside
+  Terraform and pass only the CSR.
+- **Subject alternative names.** Whether the CA honors SANs requested in `subject_alternative_names` (instead of only
+  those in the CSR) depends on the CA and template configuration.
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Import is supported using the following syntax, where the ID is the CertSecure enrollment ID (eid):
+
+{{ codefile "shell" "examples/resources/certsecure_certificate/import.sh" }}
+
+Import reads the certificate, chain, status, `ca_name` and `template` from CertSecure. The CSR, tags, notes, owner
+email and requested SANs cannot be recovered, and `task_id` is not available.
+
+After import, the first apply records `csr_pem` from the configuration. If the CSR is for the same key as the
+imported certificate, nothing is issued. If it is for a different key, the certificate is renewed with it. To keep
+a configuration that sets `tags`, `notes`, `owner_email` or `subject_alternative_names` from replacing the imported
+certificate, ignore those arguments:
+
+```terraform
+resource "certsecure_certificate" "app" {
+  csr_pem  = tls_cert_request.app.cert_request_pem
+  ca_name  = "Issuing-CA-01"
+  template = "WebServer"
+  tags     = ["terraform"]
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
+}
+```

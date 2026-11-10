@@ -1,0 +1,73 @@
+{
+  "ACME": {
+    "AWS ACME": [
+      "CertSecure Backend"
+    ]
+  },
+  "AWS-ACM": {
+    "AWS Private CA": [
+      "CertSecure Backend"
+    ],
+    "AWS Public Trust CA": [
+      "CertSecure Backend"
+    ]
+  },
+  "AWS-PCA": {
+    "AWS Private CA": [
+      "CertSecure Backend"
+    ],
+    "AWS Private EC CA": [
+      "CertSecure Backend"
+    ]
+  },
+  "DIGICERT": {
+    "DigiCert CA": [
+      "Digicert CA Connector Test"
+    ]
+  },
+  "GLOBALSIGN": {
+    "GlobalSign Demo CA": [
+      "CertSecure Backend"
+    ]
+  },
+  "GLOBALSIGN-ACME": {
+    "GlobalSign ACME CA": [
+      "CertSecure Backend"
+    ],
+    "GlobalSign Public CA": [
+      "CertSecure Backend"
+    ]
+  },
+  "GODADDY-AUTOMATED": {
+    "GoDaddy ACME CA": [
+      "CertSecure Backend"
+    ]
+  },
+  "LETSENCRYPT": {
+    "Let's Encrypt": [
+      "CertSecure Backend"
+    ],
+    "Lets Encrypt": [
+      "CertSecure Backend"
+    ],
+    "Test ACME CA": [
+      "CertSecure Backend"
+    ]
+  },
+  "MSCA": {
+    "Example Internal CA": [
+      "MSCA-Internal"
+    ],
+    "Example Internal CA02": [
+      "ExampleCAlocal"
+    ],
+    "Example Issuing CA": [
+      "R CA Connector"
+    ]
+  },
+  "SECTIGO": {
+    "Sectigo CA": [
+      "CertSecure Backend"
+    ]
+  }
+}

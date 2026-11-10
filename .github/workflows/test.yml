@@ -1,0 +1,79 @@
+# Terraform Provider testing workflow.
+#
+# Runs build, vet, lint, unit tests and a docs-generation drift check on every
+# pull request and push. Acceptance tests need CertSecure credentials and live
+# in acceptance.yml, which never runs for pull requests from forks.
+name: Tests
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - 'CHANGELOG.md'
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'CHANGELOG.md'
+  workflow_dispatch:
+
+# Only one run per branch at a time; cancel any in-progress run when a new one is triggered.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - run: go mod download
+      - run: ./scripts/gofmtcheck.sh
+      - run: go build -v ./...
+      - run: go vet ./...
+      - name: Run linters
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: latest
+
+  unit:
+    name: Unit Tests
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - run: go mod download
+      - run: go test -v -cover -timeout=5m ./...
+
+  generate:
+    name: Docs Up To Date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      # tfplugindocs and `terraform fmt` need the Terraform CLI.
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_wrapper: false
+      - run: make generate
+      - run: make docs-validate
+      - name: git diff
+        run: |
+          git diff --compact-summary --exit-code || \
+            (echo; echo "Unexpected difference in directories after code generation. Run 'make generate' command and commit."; exit 1)

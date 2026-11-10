@@ -1,0 +1,204 @@
+{
+  "Example Issuing CA": {
+    "configure": false,
+    "templates": [
+      {
+        "CryptoProviders": [
+          "Microsoft RSA SChannel Cryptographic Provider"
+        ],
+        "Description": "Computer",
+        "EnhancedKeyUsages": [
+          "IP security IKE intermediate (1.3.6.1.5.5.8.2.2)"
+        ],
+        "EnrollmentFlags": [
+          "CT_FLAG_AUTO_ENROLLMENT -- 20 (32)"
+        ],
+        "FriendlyName": "IPSec",
+        "KeyUsages": "Digital Signature, Key Encipherment (a0)",
+        "MinKeySize": "2048",
+        "RenewalPeriod": "6 Weeks",
+        "TemplateOID": "1.3.6.1.4.1.311.21.8.1000001.2000002.3000003.4000004.5000005.161.1.19",
+        "ValidityPeriod": "2 Years"
+      },
+      {
+        "CryptoProviders": [
+          "Microsoft RSA SChannel Cryptographic Provider"
+        ],
+        "Description": "Computer",
+        "EnhancedKeyUsages": [
+          "IP security IKE intermediate (1.3.6.1.5.5.8.2.2)"
+        ],
+        "EnrollmentFlags": [],
+        "FriendlyName": "IPSec (Offline request)",
+        "KeyUsages": "Digital Signature, Key Encipherment (a0)",
+        "MinKeySize": "2048",
+        "RenewalPeriod": "6 Weeks",
+        "TemplateOID": "1.3.6.1.4.1.311.21.8.1000001.2000002.3000003.4000004.5000005.161.1.20",
+        "ValidityPeriod": "2 Years"
+      },
+      {
+        "CryptoProviders": [
+          "Microsoft Enhanced Cryptographic Provider v1.0",
+          "Microsoft Base Cryptographic Provider v1.0",
+          "Microsoft Base DSS Cryptographic Provider"
+        ],
+        "Description": "User",
+        "EnhancedKeyUsages": [
+          "Certificate Request Agent (1.3.6.1.4.1.311.20.2.1)"
+        ],
+        "EnrollmentFlags": [],
+        "FriendlyName": "Exchange Enrollment Agent (Offline request)",
+        "KeyUsages": "Digital Signature (80)",
+        "MinKeySize": "2048",
+        "RenewalPeriod": "6 Weeks",
+        "TemplateOID": "1.3.6.1.4.1.311.21.8.1000001.2000002.3000003.4000004.5000005.161.1.12",
+        "ValidityPeriod": "2 Years"
+      },
+      {
+        "CryptoProviders": [
+          "Microsoft RSA SChannel Cryptographic Provider"
+        ],
+        "Description": "Computer",
+        "EnhancedKeyUsages": [
+          "Certificate Request Agent (1.3.6.1.4.1.311.20.2.1)"
+        ],
+        "EnrollmentFlags": [],
+        "FriendlyName": "CEP Encryption",
+        "KeyUsages": "Key Encipherment (20)",
+        "MinKeySize": "2048",
+        "RenewalPeriod": "6 Weeks",
+        "TemplateOID": "1.3.6.1.4.1.311.21.8.1000001.2000002.3000003.4000004.5000005.161.1.22",
+        "ValidityPeriod": "2 Years"
+      },
+      {
+        "CryptoProviders": [
+          "Microsoft RSA SChannel Cryptographic Provider",
+          "Microsoft DH SChannel Cryptographic Provider"
+        ],
+        "Description": "Computer",
+        "EnhancedKeyUsages": [
+          "Server Authentication (1.3.6.1.5.5.7.3.1)"
+        ],
+        "EnrollmentFlags": [],
+        "FriendlyName": "VCF Web Enrollment",
+        "KeyUsages": "Digital Signature, Key Encipherment (a0)",
+        "MinKeySize": "2048",
+        "RenewalPeriod": "6 Weeks",
+        "TemplateOID": "1.3.6.1.4.1.311.21.8.1000001.2000002.3000003.4000004.5000005.161.2858454.4182017",
+        "ValidityPeriod": "2 Years"
+      },
+      {
+        "CryptoProviders": [
+          "Microsoft Enhanced Cryptographic Provider v1.0",
+          "Microsoft Base Cryptographic Provider v1.0",
+          "Microsoft Base DSS Cryptographic Provider"
+        ],
+        "Description": "User",
+        "EnhancedKeyUsages": [
+          "Code Signing (1.3.6.1.5.5.7.3.3)"
+        ],
+        "EnrollmentFlags": [
+          "CT_FLAG_AUTO_ENROLLMENT -- 20 (32)"
+        ],
+        "FriendlyName": "Code Signing",
+        "KeyUsages": "Digital Signature (80)",
+        "MinKeySize": "2048",
+        "RenewalPeriod": "6 Weeks",
+        "TemplateOID": "1.3.6.1.4.1.311.21.8.1000001.2000002.3000003.4000004.5000005.161.1.9",
+        "ValidityPeriod": "1 Years"
+      },
+      {
+        "CryptoProviders": [
+          "Microsoft RSA SChannel Cryptographic Provider"
+        ],
+        "Description": "Computer",
+        "EnhancedKeyUsages": [
+          "Client Authentication (1.3.6.1.5.5.7.3.2)",
+          "Server Authentication (1.3.6.1.5.5.7.3.1)"
+        ],
+        "EnrollmentFlags": [
+          "CT_FLAG_PUBLISH_TO_DS -- 8"
+        ],
+        "FriendlyName": "Proton NE OnBehalf",
+        "KeyUsages": "Digital Signature, Key Encipherment (a0)",
+        "MinKeySize": "2048",
+        "RenewalPeriod": "6 Weeks",
+        "TemplateOID": "1.3.6.1.4.1.311.21.8.1000001.2000002.3000003.4000004.5000005.161.1660766.7645971",
+        "ValidityPeriod": "1 Years"
+      },
+      {
+        "CryptoProviders": [
+          "Microsoft Enhanced Cryptographic Provider v1.0",
+          "Microsoft Base Cryptographic Provider v1.0"
+        ],
+        "Description": "User",
+        "EnhancedKeyUsages": [
+          "Certificate Request Agent (1.3.6.1.4.1.311.20.2.1)"
+        ],
+        "EnrollmentFlags": [
+          "CT_FLAG_AUTO_ENROLLMENT -- 20 (32)"
+        ],
+        "FriendlyName": "Proton EA",
+        "KeyUsages": "Digital Signature (80)",
+        "MinKeySize": "2048",
+        "RenewalPeriod": "6 Weeks",
+        "TemplateOID": "1.3.6.1.4.1.311.21.8.1000001.2000002.3000003.4000004.5000005.161.6658348.12661472",
+        "ValidityPeriod": "2 Years"
+      },
+      {
+        "CryptoProviders": [
+          "Microsoft RSA SChannel Cryptographic Provider"
+        ],
+        "Description": "Computer",
+        "EnhancedKeyUsages": [
+          "Server Authentication (1.3.6.1.5.5.7.3.1)",
+          "Client Authentication (1.3.6.1.5.5.7.3.2)"
+        ],
+        "EnrollmentFlags": [
+          "CT_FLAG_PUBLISH_TO_DS -- 8"
+        ],
+        "FriendlyName": "Intune-test",
+        "KeyUsages": "Digital Signature, Key Encipherment (a0)",
+        "MinKeySize": "2048",
+        "RenewalPeriod": "6 Weeks",
+        "TemplateOID": "1.3.6.1.4.1.311.21.8.1000001.2000002.3000003.4000004.5000005.161.1259307.12460727",
+        "ValidityPeriod": "1 Years"
+      },
+      {
+        "CryptoProviders": [
+          "Microsoft RSA SChannel Cryptographic Provider",
+          "Microsoft DH SChannel Cryptographic Provider"
+        ],
+        "Description": "Computer",
+        "EnhancedKeyUsages": [
+          "Server Authentication (1.3.6.1.5.5.7.3.1)"
+        ],
+        "EnrollmentFlags": [],
+        "FriendlyName": "Web Server",
+        "KeyUsages": "Digital Signature, Key Encipherment (a0)",
+        "MinKeySize": "2048",
+        "RenewalPeriod": "6 Weeks",
+        "TemplateOID": "1.3.6.1.4.1.311.21.8.1000001.2000002.3000003.4000004.5000005.161.1.16",
+        "ValidityPeriod": "2 Years"
+      },
+      {
+        "CryptoProviders": [],
+        "Description": "Computer",
+        "EnhancedKeyUsages": [
+          "OCSP Signing (1.3.6.1.5.5.7.3.9)"
+        ],
+        "EnrollmentFlags": [
+          "CT_FLAG_AUTO_ENROLLMENT -- 20 (32)",
+          "CT_FLAG_ADD_OCSP_NOCHECK -- 1000 (4096)",
+          "CT_FLAG_NOREVOCATIONINFOINISSUEDCERTS -- 4000 (16384)"
+        ],
+        "FriendlyName": "OCSP Response Signing",
+        "KeyUsages": "Digital Signature (80)",
+        "MinKeySize": "2048",
+        "RenewalPeriod": "2 Days",
+        "TemplateOID": "1.3.6.1.4.1.311.21.8.1000001.2000002.3000003.4000004.5000005.161.1.32",
+        "ValidityPeriod": "2 Weeks"
+      }
+    ]
+  }
+}

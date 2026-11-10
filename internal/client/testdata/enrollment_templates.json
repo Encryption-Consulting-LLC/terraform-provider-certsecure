@@ -1,0 +1,72 @@
+{
+  "AWS ACME": [
+    "ACME CA",
+    "AWS ACME SSL"
+  ],
+  "AWS Private CA": [
+    "AWS Public SSL",
+    "AWS Private SSL",
+    "AWS PCA Server Authentication",
+    "AWS PCA Client Authentication",
+    "AWS PCA Code Signing",
+    "AWS PCA Email Protection",
+    "AWS PCA End Entity",
+    "AWS PCA End Entity (API Passthrough)",
+    "AWS Default SSL"
+  ],
+  "AWS Private EC CA": [
+    "AWS PCA Server Authentication",
+    "AWS PCA Client Authentication",
+    "AWS PCA Code Signing",
+    "AWS PCA Email Protection",
+    "AWS PCA End Entity",
+    "AWS PCA End Entity (API Passthrough)",
+    "AWS Private SSL"
+  ],
+  "AWS Public Trust CA": [
+    "AWS Public SSL"
+  ],
+  "Example-pki": [
+    "my-first-vault-cert",
+    "test-webserver"
+  ],
+  "GlobalSign Demo CA": [
+    "GlobalSign Atlas HVCA Template",
+    "test-123-template",
+    "TemplateTest"
+  ],
+  "GlobalSign Public CA": [
+    "GlobalSign Atlas (ACME)",
+    "GlobalSign Public DV SSL"
+  ],
+  "GoDaddy ACME CA": [
+    "GoDaddy Automated SSL",
+    "GoDaddy Automated Single DV SSL"
+  ],
+  "Let's Encrypt": [
+    "Let's Encrypt",
+    "Let's Encrypt SSL"
+  ],
+  "Example Issuing CA": [
+    "IPSECIntermediateOnline",
+    "IPSECIntermediateOffline",
+    "EnrollmentAgentOffline",
+    "CEPEncryption",
+    "VCFWebEnrollment",
+    "CodeSigning",
+    "ProtonNEOnBehalf",
+    "ProtonEA",
+    "Intune-test",
+    "WebServer",
+    "OCSPResponseSigning"
+  ],
+  "Sectigo CA": [
+    "Private SSL SHA256",
+    "Private SSL SHA384",
+    "Sectigo Enterprise Pro - SHA384",
+    "Sectigo Enterprise Pro SSL",
+    "Sectigo Enterprise Pro Wildcard",
+    "Sectigo Multi-Domain (OV)",
+    "Sectigo SSL"
+  ]
+}

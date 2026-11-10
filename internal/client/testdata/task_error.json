@@ -1,0 +1,11 @@
+{
+  "IP": "127.0.0.1",
+  "TaskID": "20800",
+  "createdOn": "2026-10-21 20:41:00",
+  "details": "Certificate is denied by policy Module: Wildcard certificates are denied by policy module.",
+  "status": "Denied By Policy Module",
+  "statusInfo": "ERROR",
+  "taskName": "Certificate Request: tf-provider-test.example.com",
+  "updatedOn": "2026-10-21 20:41:01",
+  "user": "user@example.com"
+}

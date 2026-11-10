@@ -1,0 +1,11 @@
+{
+  "IP": "192.0.2.10",
+  "TaskID": "20795",
+  "createdOn": "2026-10-21 20:26:07",
+  "details": "Certificate request for enrollment ID 1509 has been Issued",
+  "status": "Certificate Issued",
+  "statusInfo": "OK",
+  "taskName": "Certificate Request: tf-provider-test.example.com",
+  "updatedOn": "2026-10-21 20:26:13",
+  "user": "user@example.com"
+}
