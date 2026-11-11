@@ -103,6 +103,12 @@ func (d *casDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	cas, err := d.client.ListAvailableCAs(ctx)
 	if err != nil {
 		summary, detail := describeAPIError(err)
+		if client.IsUnauthorized(err) {
+			// The token passed the check when the provider was configured, so it is
+			// valid and the 401 is specific to this endpoint.
+			detail = "CertSecure accepted the token when the provider was configured, but refused it for the CA list. " +
+				"Use an API token created in CertSecure (API Token Management).\n\n" + detail
+		}
 		resp.Diagnostics.AddError("Error listing CertSecure CAs: "+summary, detail)
 		return
 	}

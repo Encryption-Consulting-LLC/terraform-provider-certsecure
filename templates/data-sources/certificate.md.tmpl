@@ -1,0 +1,27 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
+subcategory: ""
+description: |-
+  Reads an existing certificate from CertSecure by its enrollment ID.
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+To manage a certificate's lifecycle (renewal and revocation) with Terraform, use the [certsecure_certificate resource](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/resources/certificate) instead, or import
+the certificate into it.
+
+## Example Usage
+
+{{ tffile "examples/data-sources/certsecure_certificate/data-source.tf" }}
+
+## Important Notes
+
+- **No private key.** The data source returns the certificate and its chain only. A destination that needs the key,
+  such as `aws_acm_certificate`, takes it from where the key and CSR were created.
+- **Only issued certificates can be read.** A request that is pending or awaits approval has no certificate yet, and
+  reading it fails with its status. Revoked and expired certificates can be read; check `status` and `not_after`.
+- **Permissions.** The CertSecure user of the API token needs *View Enrollment Database*.
+
+{{ .SchemaMarkdown | trimspace }}

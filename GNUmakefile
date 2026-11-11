@@ -1,7 +1,7 @@
 HOSTNAME=registry.terraform.io
 NAMESPACE=encryption-consulting-llc
 NAME=certsecure
-VERSION?=1.0.0
+VERSION?=1.1.0
 BINARY=terraform-provider-${NAME}
 OS_ARCH := $(shell go env GOOS)_$(shell go env GOARCH)
 INSTALLDIR := ${HOME}/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}

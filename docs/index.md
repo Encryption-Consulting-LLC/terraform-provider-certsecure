@@ -1,10 +1,10 @@
 ---
-page_title: "certsecure Provider"
+page_title: "CertSecure Provider"
 description: |-
   Terraform provider for CertSecure Manager: issue certificates from CAs connected to CertSecure, such as Microsoft CA (AD CS).
 ---
 
-# certsecure Provider
+# CertSecure Provider
 
 ## Overview
 
@@ -23,17 +23,21 @@ Below are the currently supported resources and data sources:
 | Certificate (CSR enrollment) | [certsecure_certificate](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/resources/certificate) |
 | Available CAs                | [certsecure_cas](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/data-sources/cas)       |
 | CA templates                 | [certsecure_templates](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/data-sources/templates) |
+| Certificate lookup           | [certsecure_certificate](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/data-sources/certificate) (data source) |
 
 ## Support
 
-To report a problem or suggest a new feature, open an issue in the provider's GitHub repository. Customers with a
-CertSecure Manager support agreement can also contact Encryption Consulting support.
+The provider is developed and supported by Encryption Consulting for CertSecure Manager customers. For help, contact
+Encryption Consulting through your usual support channel or the
+[contact page](https://www.encryptionconsulting.com/contact-us/). Problems and feature requests can also be reported in
+the [provider's GitHub repository](https://github.com/Encryption-Consulting-LLC/terraform-provider-certsecure/issues).
+Report security vulnerabilities privately, as described in the repository's `SECURITY.md`.
 
 ## Compatibility
 
 | CertSecure Manager Version | Terraform Provider Version |
 |----------------------------|----------------------------|
-| 3.4                        | 1.0.x                      |
+| 3.4                        | 1.0.x, 1.1.x               |
 
 ## Authentication
 

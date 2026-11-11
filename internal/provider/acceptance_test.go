@@ -134,6 +134,22 @@ resource "certsecure_certificate" "test" {
 				PlanOnly: true,
 			},
 			{
+				// The data source reads the same certificate; nothing new is issued.
+				Config: config + `
+data "certsecure_certificate" "test" {
+  enrollment_id = certsecure_certificate.test.enrollment_id
+}
+`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.certsecure_certificate.test", "status", "active"),
+					resource.TestCheckResourceAttrPair("data.certsecure_certificate.test", "certificate_pem", "certsecure_certificate.test", "certificate_pem"),
+					resource.TestCheckResourceAttrPair("data.certsecure_certificate.test", "chain_pem", "certsecure_certificate.test", "chain_pem"),
+					resource.TestCheckResourceAttrPair("data.certsecure_certificate.test", "serial_number", "certsecure_certificate.test", "serial_number"),
+					resource.TestCheckResourceAttrPair("data.certsecure_certificate.test", "ca_name", "certsecure_certificate.test", "ca_name"),
+					resource.TestCheckResourceAttrPair("data.certsecure_certificate.test", "template", "certsecure_certificate.test", "template"),
+				),
+			},
+			{
 				ResourceName:            "certsecure_certificate.test",
 				ImportState:             true,
 				ImportStateVerify:       true,

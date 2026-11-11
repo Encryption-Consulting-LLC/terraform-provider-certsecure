@@ -1,3 +1,24 @@
+# v1.1.0
+
+## Certificates
+
+### Features
+
+- feat: new data source `certsecure_certificate` reads an existing certificate by enrollment ID: certificate, chain,
+  status, CA, template, common name, DNS names, tags, serial number and validity period. It never issues, renews or
+  revokes.
+
+### Bug Fixes
+
+- fix: `certsecure_cas` explains an HTTP 401 for a token that passed the provider's token check, and points to API
+  tokens created in API Token Management.
+
+### Documentation
+
+- docs: the provider docs title is now "CertSecure Provider".
+- docs: support statement (the provider is supported by Encryption Consulting for CertSecure Manager customers),
+  security policy (`SECURITY.md`), issue templates, and contribution guidelines.
+
 # v1.0.0
 
 ## Certificates

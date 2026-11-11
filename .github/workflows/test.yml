@@ -1,14 +1,18 @@
 # Terraform Provider testing workflow.
 #
 # Runs build, vet, lint, unit tests and a docs-generation drift check on every
-# pull request and push. Acceptance tests need CertSecure credentials and live
-# in acceptance.yml, which never runs for pull requests from forks.
+# pull request and on pushes to main. Acceptance tests need CertSecure
+# credentials and live in acceptance.yml, which never runs for pull requests
+# from forks.
 name: Tests
 
 on:
   # Every pull request runs the full suite: the checks are required to merge into main.
   pull_request:
+  # Branch pushes are covered by their pull request; only main runs on push.
   push:
+    branches:
+      - main
     paths-ignore:
       - 'README.md'
       - 'CHANGELOG.md'
@@ -21,6 +25,10 @@ concurrency:
 
 permissions:
   contents: read
+
+env:
+  # No calls to HashiCorp's version-check service: a timeout there failed CI once.
+  CHECKPOINT_DISABLE: '1'
 
 jobs:
   build:
@@ -53,6 +61,11 @@ jobs:
         with:
           go-version-file: 'go.mod'
           cache: true
+      # The tests run Terraform; use this installed CLI instead of looking one up.
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_wrapper: false
+      - run: echo "TF_ACC_TERRAFORM_PATH=$(command -v terraform)" >> "$GITHUB_ENV"
       - run: go mod download
       - run: go test -v -cover -timeout=5m ./...
 

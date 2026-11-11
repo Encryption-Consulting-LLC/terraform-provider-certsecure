@@ -1,0 +1,68 @@
+name: Bug report
+description: Something in the provider does not work as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a problem. **Never paste API tokens, private keys, certificate bodies,
+        internal host names or IP addresses.** Report security vulnerabilities privately (see SECURITY.md).
+  - type: input
+    id: provider-version
+    attributes:
+      label: Provider version
+      description: Output of `terraform version` shows it, for example `encryption-consulting-llc/certsecure v1.1.0`.
+    validations:
+      required: true
+  - type: input
+    id: terraform-version
+    attributes:
+      label: Terraform version
+      placeholder: "1.14.0"
+    validations:
+      required: true
+  - type: input
+    id: certsecure-version
+    attributes:
+      label: CertSecure Manager version
+      placeholder: "3.4"
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Terraform configuration
+      description: The smallest configuration that shows the problem, with secrets and host names removed.
+      render: hcl
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the error message and, if relevant, the enrollment ID (eid) and task ID it reports.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. terraform apply
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Debug log excerpt
+      description: |
+        Relevant lines from a run with `TF_LOG=DEBUG`. The provider never logs tokens, but check the excerpt and
+        remove host names, IP addresses, email addresses and certificate bodies before posting.
+      render: shell

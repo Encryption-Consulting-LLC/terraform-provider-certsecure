@@ -2,7 +2,7 @@
 # Creates and pushes a release tag. The Release workflow then builds, signs and
 # publishes the release.
 #
-#   ./tag.sh v1.0.0
+#   ./tag.sh v1.1.0
 set -euo pipefail
 
 TAG_VERSION="${1:-}"
