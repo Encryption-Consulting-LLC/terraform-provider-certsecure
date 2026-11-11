@@ -1,7 +1,5 @@
 # CertSecure Terraform Provider
 
-## Integration status: Production - Ready for use in production environments.
-
 ## Overview
 
 The Terraform provider for [CertSecure Manager](https://www.encryptionconsulting.com/) enables certificate issuance
@@ -19,14 +17,19 @@ Below are the currently supported resources and data sources:
 | Certificate (CSR enrollment) | `POST /enrollment/enroll_csr`           | [certsecure_certificate](docs/resources/certificate.md) (resource)                     |
 | Available CAs               | `GET /available_ca`                     | [certsecure_cas](docs/data-sources/cas.md) (data source)                               |
 | CA templates                | `GET /enrollment/templates`, `GET /template/ca` | [certsecure_templates](docs/data-sources/templates.md) (data source)          |
+| Certificate lookup          | `GET /enrollment/enrolled_csr_details`, downloads | [certsecure_certificate](docs/data-sources/certificate.md) (data source)     |
 
 The full API reference of a deployment is available at `<CERTSECURE_URL>/static/swagger.json`.
 
 ## Support
 
-To report a problem or suggest a new feature, go to [Issues](../../issues). If you want to contribute bug fixes or
-proposed enhancements, see the [Contributing Guidelines](CONTRIBUTING.md) and create a [Pull request](../../pulls).
-Customers with a CertSecure Manager support agreement can also contact Encryption Consulting support.
+The CertSecure Terraform provider is developed and supported by Encryption Consulting for CertSecure Manager
+customers. For help with the provider, contact Encryption Consulting through your usual support channel or the
+[contact page](https://www.encryptionconsulting.com/contact-us/).
+
+You can also report a problem or suggest a new feature in [Issues](../../issues). If you want to contribute bug fixes
+or proposed enhancements, see the [Contributing Guidelines](CONTRIBUTING.md) and create a [Pull request](../../pulls).
+Report security vulnerabilities privately, as described in [SECURITY.md](SECURITY.md).
 
 ## Authentication
 
@@ -101,7 +104,7 @@ Key behaviors (details in the [resource documentation](docs/resources/certificat
 
 | CertSecure Manager Version | Terraform Provider Version |
 |----------------------------|----------------------------|
-| 3.4                        | 1.0.x                      |
+| 3.4                        | 1.0.x, 1.1.x               |
 
 ## Requirements
 
@@ -140,9 +143,9 @@ Download a pre-built release and install it into Terraform's local filesystem mi
 ~/.terraform.d/plugins/registry.terraform.io/encryption-consulting-llc/certsecure/<VERSION>/<OS>_<ARCH>/terraform-provider-certsecure_v<VERSION>
 ```
 
-Example for Linux amd64, version 1.0.0:
+Example for Linux amd64, version 1.1.0:
 ```bash
-PROVIDER_VERSION="1.0.0"
+PROVIDER_VERSION="1.1.0"
 OS_ARCH="linux_amd64"                  # or linux_arm64 / darwin_amd64 / darwin_arm64
 PLUGIN_DIR="${HOME}/.terraform.d/plugins/registry.terraform.io/encryption-consulting-llc/certsecure/${PROVIDER_VERSION}/${OS_ARCH}"
 mkdir -p "${PLUGIN_DIR}"
@@ -152,7 +155,7 @@ chmod +x "${PLUGIN_DIR}/terraform-provider-certsecure_v${PROVIDER_VERSION}"
 
 **Windows (PowerShell)**
 ```powershell
-$ProviderVersion = "1.0.0"
+$ProviderVersion = "1.1.0"
 $OSArch = "windows_amd64"              # or windows_arm64
 $PluginDir = "$env:APPDATA\terraform.d\plugins\registry.terraform.io\encryption-consulting-llc\certsecure\$ProviderVersion\$OSArch"
 New-Item -ItemType Directory -Force -Path $PluginDir
@@ -166,7 +169,7 @@ terraform {
   required_providers {
     certsecure = {
       source  = "encryption-consulting-llc/certsecure"
-      version = "1.0.0"
+      version = "1.1.0"
     }
   }
 }
@@ -192,6 +195,10 @@ The CertSecure user that owns the API token needs the following permissions.
 | Skip approval                     | Requests that the template's approval workflow or a policy flags wait for approval, unless the user has *Bypass Certificate Approval*. |
 
 ### Data Sources
+
+#### data "certsecure_certificate"
+
+*View Enrollment Database*.
 
 #### data "certsecure_cas" and data "certsecure_templates"
 

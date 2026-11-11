@@ -194,6 +194,7 @@ func (p *certSecureProvider) DataSources(_ context.Context) []func() datasource.
 	return []func() datasource.DataSource{
 		NewCAsDataSource,
 		NewTemplatesDataSource,
+		NewCertificateDataSource,
 	}
 }
 

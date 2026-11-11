@@ -42,6 +42,20 @@ data "certsecure_cas" "msca" {
 	})
 }
 
+func TestCAsDataSourceUnauthorized(t *testing.T) {
+	f := newFakeCertSecure(t)
+	f.availableCAUnauthorized = true
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testProviderFactories,
+		Steps: []resource.TestStep{{
+			Config: providerBlock(f.srv.URL) + `
+data "certsecure_cas" "all" {}
+`,
+			ExpectError: regexp.MustCompile(`(?s)refused\s+it\s+for\s+the\s+CA\s+list.*API\s+Token\s+Management`),
+		}},
+	})
+}
+
 func TestTemplatesDataSource(t *testing.T) {
 	f := newFakeCertSecure(t)
 	resource.UnitTest(t, resource.TestCase{

@@ -4,6 +4,18 @@ Thank you for your interest in contributing to the CertSecure provider. Here you
 started with provider development. The best place to get started with the development of Terraform providers is the
 [Terraform Plugin Framework documentation](https://developer.hashicorp.com/terraform/plugin/framework).
 
+## How to contribute
+
+* **Open an issue first** for anything larger than a small fix, so the approach can be agreed before you write code.
+* **Tests are required.** Every behavior change needs unit tests against the in-memory CertSecure server (see
+  [Unit tests](#unit-tests)). Contributors do not need access to a CertSecure deployment.
+* **Acceptance tests are run by the maintainers.** Before merging, a maintainer runs the acceptance tests against a lab
+  CertSecure deployment when the change needs them.
+* **Add a CHANGELOG entry** under `# Unreleased` in [CHANGELOG.md](CHANGELOG.md) for every user-visible change.
+* **Review and merge.** A maintainer reviews and approves every pull request; CI must pass. Workflows for pull requests
+  from first-time contributors start after a maintainer approves them. Pull requests are merged with merge commits.
+* **Security issues** are never reported in public issues or pull requests; see [SECURITY.md](SECURITY.md).
+
 ## Building the provider
 
 1. Clone the repository
@@ -118,29 +130,12 @@ CI fails if `make generate` changes any committed file.
 
 ## Releasing
 
-1. Add a section for the version to [CHANGELOG.md](CHANGELOG.md).
+Releases are made by the maintainers.
+
+1. Move the `# Unreleased` entries in [CHANGELOG.md](CHANGELOG.md) under a `# vX.Y.Z` heading.
 2. Run `./tag.sh vX.Y.Z` on an up-to-date, clean `main`. It checks the tag format and the changelog, then creates and
-   pushes the tag.
-3. The `Release` workflow builds with GoReleaser and publishes a GitHub release with the zip archives,
-   `SHA256SUMS`, its detached GPG signature, and the registry manifest. The Terraform Registry picks up new releases
-   through its GitHub webhook.
-
-Repository secrets required for releases: `GPG_PRIVATE_KEY` (ASCII-armored private RSA key) and `PASSPHRASE`.
-
-### Publishing to the Terraform Registry
-
-The registry only publishes from a **public** GitHub repository named `terraform-provider-certsecure`. The registry
-namespace is the lowercased GitHub organization name. Before the first public release:
-
-1. Decide the public organization. If it differs from `Encryption-Consulting-LLC`, update the namespace everywhere it
-   appears:
-    * `go.mod` module path, and the import paths in Go files
-    * `main.go` provider address (`registry.terraform.io/<namespace>/certsecure`)
-    * `source = "<namespace>/certsecure"` in `examples/`, `templates/`, `README.md`, and this file
-    * the plugin directory paths in `README.md` and `GNUmakefile` (`NAMESPACE`)
-2. Make the repository public (or push a clean-history copy to the public repository).
-3. Generate an RSA GPG key for signing, store it in the `GPG_PRIVATE_KEY` / `PASSPHRASE` secrets, and add the public key to
-   the organization's namespace in the [Terraform Registry](https://registry.terraform.io/settings/gpg-keys).
-4. Sign in to the [Terraform Registry](https://registry.terraform.io/publish/provider) with GitHub, choose the
-   organization, and publish the repository.
-5. Tag the first release (`v1.0.0`) with `./tag.sh`.
+   pushes the tag. Only maintainers can create `v*` tags.
+3. The `Release` workflow runs in the protected `release` environment and waits for a maintainer's approval. It then
+   builds with GoReleaser and publishes a GitHub release with the zip archives, `SHA256SUMS`, its detached GPG
+   signature, and the registry manifest. The signing key is stored only in that environment.
+4. The Terraform Registry publishes the new version from the GitHub release.

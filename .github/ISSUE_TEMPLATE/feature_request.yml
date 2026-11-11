@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest a new resource, data source, argument or improvement.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What are you trying to do, and what is missing or hard today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: For example a new argument or data source, and how it would look in a Terraform configuration.
+      render: hcl
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: input
+    id: certsecure-version
+    attributes:
+      label: CertSecure Manager version
+      placeholder: "3.4"

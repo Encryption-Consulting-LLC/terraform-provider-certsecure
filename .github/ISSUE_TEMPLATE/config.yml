@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Encryption-Consulting-LLC/terraform-provider-certsecure/security/advisories/new
+    about: Report vulnerabilities privately, never in a public issue. See SECURITY.md.
+  - name: CertSecure Manager support
+    url: https://www.encryptionconsulting.com/contact-us/
+    about: For help with the provider or CertSecure Manager, contact Encryption Consulting support.

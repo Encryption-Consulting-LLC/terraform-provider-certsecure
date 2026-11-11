@@ -44,6 +44,7 @@ type fakeEnrollment struct {
 	ca       string
 	template string
 	emails   []string
+	tags     []string
 	csr      *x509.CertificateRequest
 	cert     *x509.Certificate
 	polls    int
@@ -87,6 +88,9 @@ type fakeCertSecure struct {
 	// revokeMode controls how new revocation tasks proceed (modeIssue: complete).
 	revokeMode  issueMode
 	revocations map[string]*fakeRevocation
+	// availableCAUnauthorized makes /available_ca answer 401 while the token
+	// check still succeeds.
+	availableCAUnauthorized bool
 
 	// Issued certificates are valid from issueAt for validity.
 	issueAt  time.Time
@@ -261,6 +265,11 @@ func (f *fakeCertSecure) newEnrollment(w http.ResponseWriter, body map[string]an
 			e.emails = append(e.emails, fmt.Sprint(em))
 		}
 	}
+	if tags, ok := body["tags"].([]any); ok {
+		for _, tag := range tags {
+			e.tags = append(e.tags, fmt.Sprint(tag))
+		}
+	}
 	f.byTask[e.taskID] = e
 	return e
 }
@@ -291,6 +300,10 @@ func (f *fakeCertSecure) handle(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("True"))
 
 	case "/available_ca", "/template/ca", "/enrollment/templates":
+		if r.URL.Path == "/available_ca" && f.availableCAUnauthorized {
+			writeJSONResp(w, http.StatusUnauthorized, map[string]string{"message": "Token is invalid!"})
+			return
+		}
 		name := map[string]string{"/available_ca": "available_ca.json", "/template/ca": "template_ca.json", "/enrollment/templates": "enrollment_templates.json"}[r.URL.Path]
 		if r.URL.Path == "/template/ca" && q.Get("ca") != "Example Issuing CA" {
 			writeJSONResp(w, 200, map[string]any{})
@@ -442,6 +455,7 @@ func (f *fakeCertSecure) handle(w http.ResponseWriter, r *http.Request) {
 		writeJSONResp(w, 200, map[string]any{
 			"EnrollmentID": e.eid, "CertificateAuthority": e.ca, "Template": e.template, "Status": e.status,
 			"certAvailable": e.cert != nil, "EmailID": append([]string{}, e.emails...), "commonName": e.csr.Subject.CommonName,
+			"tags": append([]string{}, e.tags...),
 		})
 
 	case "/enrollment/download_cert", "/enrollment/download":
