@@ -104,6 +104,7 @@ type certificateModel struct {
 	EarlyRenewalHours       types.Int64    `tfsdk:"early_renewal_hours"`
 	PendingRenewalTaskID    types.String   `tfsdk:"pending_renewal_task_id"`
 	RevokeOnDestroy         types.Bool     `tfsdk:"revoke_on_destroy"`
+	WaitForApproval         types.Bool     `tfsdk:"wait_for_approval"`
 	Timeouts                timeouts.Value `tfsdk:"timeouts"`
 }
 
@@ -248,6 +249,16 @@ func (r *certificateResource) Schema(ctx context.Context, _ resource.SchemaReque
 				Computed: true,
 				Default:  booldefault.StaticBool(false),
 			},
+			"wait_for_approval": schema.BoolAttribute{
+				MarkdownDescription: "When `true`, an apply whose request awaits approval in CertSecure keeps waiting until " +
+					"the request is approved and issued, denied, or the `create` (or, for renewals, `update`) timeout " +
+					"expires. Set a timeout long enough for your approval process. Defaults to `false`: the apply stops " +
+					"with an error as soon as the request awaits approval, and a later apply resumes it. The provider never " +
+					"approves or denies requests.",
+				Optional: true,
+				Computed: true,
+				Default:  booldefault.StaticBool(false),
+			},
 			"pending_renewal_task_id": schema.StringAttribute{
 				MarkdownDescription: "CertSecure task ID of a renewal that was submitted but has not completed, for example " +
 					"because it awaits approval. The next apply resumes this request instead of submitting a new one. " +
@@ -359,7 +370,7 @@ func (r *certificateResource) Create(ctx context.Context, req resource.CreateReq
 		resp.Diagnostics.Append(resp.State.Set(ctx, &partial)...)
 	}
 
-	result, waitErr := r.waitForCertificate(ctx, enrolled, csr, saveEID)
+	result, waitErr := r.waitForCertificate(ctx, enrolled, csr, saveEID, plan.WaitForApproval.ValueBool())
 	if waitErr != nil {
 		resp.Diagnostics.AddError(waitErr.summary, waitErr.detail+createAdvice(waitErr.kind, saved))
 		return
@@ -429,9 +440,9 @@ type createError struct {
 
 // waitForCertificate follows an asynchronous CertSecure enrollment until the
 // certificate can be downloaded, the request fails, it turns out to need
-// approval, or ctx expires. saveEID is called once when the enrollment ID
-// becomes known.
-func (r *certificateResource) waitForCertificate(ctx context.Context, enrolled *client.EnrollCSRResponse, csr *x509.CertificateRequest, saveEID func(int64)) (*issuedCertificate, *createError) {
+// approval (unless waitApproval), or ctx expires. saveEID is called once when
+// the enrollment ID becomes known.
+func (r *certificateResource) waitForCertificate(ctx context.Context, enrolled *client.EnrollCSRResponse, csr *x509.CertificateRequest, saveEID func(int64), waitApproval bool) (*issuedCertificate, *createError) {
 	taskID := enrolled.TaskID
 	eid := enrolled.EnrollmentID
 	if eid != 0 {
@@ -450,6 +461,20 @@ func (r *certificateResource) waitForCertificate(ctx context.Context, enrolled *
 	}
 
 	var lastState string
+	// awaitingApproval tells whether the latest poll saw the request awaiting
+	// approval (only with waitApproval; otherwise that ends the wait).
+	var awaitingApproval, loggedApproval bool
+	pending := func(details string) *createError {
+		if !waitApproval {
+			return pendingApprovalError(ids(), details)
+		}
+		if !loggedApproval {
+			loggedApproval = true
+			tflog.Info(ctx, "Certificate request awaits approval, waiting", map[string]any{"task_id": taskID, "enrollment_id": eid})
+		}
+		awaitingApproval = true
+		return nil
+	}
 	interval := pollInitialInterval
 	for {
 		if taskID != "" {
@@ -463,6 +488,7 @@ func (r *certificateResource) waitForCertificate(ctx context.Context, enrolled *
 				tflog.Debug(ctx, "Task lookup failed, will retry", map[string]any{"task_id": taskID, "error": err.Error()})
 			} else {
 				lastState = fmt.Sprintf("task %s: %s (%s)", task.StatusInfo, task.Status, task.Details)
+				awaitingApproval = false
 			}
 
 			// 2. Resolve the enrollment ID, which CertSecure assigns shortly
@@ -484,7 +510,9 @@ func (r *certificateResource) waitForCertificate(ctx context.Context, enrolled *
 				}
 			}
 			if err == nil && task.IsPendingApproval() {
-				return nil, pendingApprovalError(ids(), task.Details)
+				if e := pending(task.Details); e != nil {
+					return nil, e
+				}
 			}
 		}
 
@@ -495,7 +523,9 @@ func (r *certificateResource) waitForCertificate(ctx context.Context, enrolled *
 			case err == nil:
 				lastState = fmt.Sprintf("enrollment status %q, certificate available: %t", d.Status, d.CertAvailable)
 				if strings.EqualFold(d.Status, "requested") {
-					return nil, pendingApprovalError(ids(), "")
+					if e := pending(""); e != nil {
+						return nil, e
+					}
 				}
 				if d.CertAvailable {
 					return r.fetchIssued(ctx, eid, csr, d.Status, ids())
@@ -510,6 +540,14 @@ func (r *certificateResource) waitForCertificate(ctx context.Context, enrolled *
 
 		select {
 		case <-ctx.Done():
+			if awaitingApproval {
+				return nil, &createError{
+					kind:    waitErrPending,
+					summary: "Timed out waiting for approval",
+					detail: "The certificate request still awaited approval in CertSecure when the timeout expired." +
+						"\n\nRequest: " + ids() + ".",
+				}
+			}
 			detail := "The certificate was not available before the timeout expired."
 			if lastState != "" {
 				detail += " Last known state: " + lastState + "."
@@ -652,6 +690,9 @@ func (r *certificateResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 	if state.RevokeOnDestroy.IsNull() || state.RevokeOnDestroy.IsUnknown() {
 		state.RevokeOnDestroy = types.BoolValue(false)
+	}
+	if state.WaitForApproval.IsNull() || state.WaitForApproval.IsUnknown() {
+		state.WaitForApproval = types.BoolValue(false)
 	}
 	if state.EarlyRenewalHours.IsNull() || state.EarlyRenewalHours.IsUnknown() {
 		state.EarlyRenewalHours = types.Int64Value(0)
@@ -873,6 +914,7 @@ func (r *certificateResource) Update(ctx context.Context, req resource.UpdateReq
 	inFlight.Timeouts = plan.Timeouts
 	inFlight.EarlyRenewalHours = plan.EarlyRenewalHours
 	inFlight.RevokeOnDestroy = plan.RevokeOnDestroy
+	inFlight.WaitForApproval = plan.WaitForApproval
 	saveInFlight := func(taskID string, submittedCSR []byte) {
 		inFlight.PendingRenewalTaskID = types.StringNull()
 		if taskID != "" {
@@ -929,7 +971,7 @@ func (r *certificateResource) Update(ctx context.Context, req resource.UpdateReq
 		saveInFlight(taskID, fingerprint)
 	}
 
-	result, waitErr := r.waitForCertificate(ctx, &client.EnrollCSRResponse{TaskID: taskID}, csr, func(int64) {})
+	result, waitErr := r.waitForCertificate(ctx, &client.EnrollCSRResponse{TaskID: taskID}, csr, func(int64) {}, plan.WaitForApproval.ValueBool())
 	if waitErr != nil {
 		summary, advice := waitErr.summary, ""
 		switch waitErr.kind {
@@ -972,10 +1014,11 @@ func (r *certificateResource) resumeIssuance(ctx context.Context, csr *x509.Cert
 	kept.Timeouts = plan.Timeouts
 	kept.EarlyRenewalHours = plan.EarlyRenewalHours
 	kept.RevokeOnDestroy = plan.RevokeOnDestroy
+	kept.WaitForApproval = plan.WaitForApproval
 	resp.Diagnostics.Append(resp.State.Set(ctx, &kept)...)
 
 	tflog.Info(ctx, "Resuming pending certificate request", map[string]any{"enrollment_id": eid, "task_id": taskID})
-	result, waitErr := r.waitForCertificate(ctx, &client.EnrollCSRResponse{TaskID: taskID, EnrollmentID: eid}, csr, func(int64) {})
+	result, waitErr := r.waitForCertificate(ctx, &client.EnrollCSRResponse{TaskID: taskID, EnrollmentID: eid}, csr, func(int64) {}, plan.WaitForApproval.ValueBool())
 	if waitErr != nil {
 		summary, advice := waitErr.summary, ""
 		switch waitErr.kind {

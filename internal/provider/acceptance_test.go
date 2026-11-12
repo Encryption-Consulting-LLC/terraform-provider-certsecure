@@ -34,8 +34,78 @@ import (
 //	CERTSECURE_TEST_CA                 CA name, e.g. "Issuing CA"
 //	CERTSECURE_TEST_TEMPLATE           template that issues without approval
 //
-// Only TestAccCertificateRevoke revokes its certificate; revoke the others in
-// CertSecure if needed.
+// Every certificate is revoked again when the test ends: the current one by
+// revoke_on_destroy, the ones TestAccCertificateRenewal renewed by the test
+// itself. CheckDestroy verifies that all of them are revoked.
+
+// testAccClient returns an API client for the acceptance test deployment.
+func testAccClient() (*client.Client, error) {
+	return client.New(client.Config{URL: os.Getenv(envURL), Token: os.Getenv(envToken)})
+}
+
+// testAccEID records the enrollment ID of certsecure_certificate.test in *eids.
+func testAccEID(t *testing.T, eids *[]int64) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs := s.RootModule().Resources["certsecure_certificate.test"].Primary
+		t.Logf("certificate: enrollment_id=%s task_id=%s serial=%s",
+			rs.Attributes["enrollment_id"], rs.Attributes["task_id"], rs.Attributes["serial_number"])
+		eid, err := strconv.ParseInt(rs.Attributes["enrollment_id"], 10, 64)
+		if err != nil {
+			return err
+		}
+		if slices.Contains(*eids, eid) {
+			return fmt.Errorf("enrollment_id %d did not change", eid)
+		}
+		*eids = append(*eids, eid)
+		return nil
+	}
+}
+
+// testAccCheckRevoked returns a CheckDestroy that revokes all but the last of
+// *eids when revokeRenewed is set (destroy revokes only the current
+// certificate), then checks that all of them are revoked.
+func testAccCheckRevoked(t *testing.T, eids *[]int64, revokeRenewed bool) func(*terraform.State) error {
+	return func(*terraform.State) error {
+		c, err := testAccClient()
+		if err != nil {
+			return err
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+		for i, eid := range *eids {
+			if revokeRenewed && i < len(*eids)-1 {
+				taskID, err := c.RevokeCert(ctx, eid)
+				if err != nil {
+					return fmt.Errorf("revoking renewed certificate %d: %w", eid, err)
+				}
+				t.Logf("revoking renewed certificate: enrollment_id=%d task_id=%s", eid, taskID)
+			}
+			if err := testAccWaitRevoked(ctx, c, eid); err != nil {
+				return err
+			}
+			t.Logf("enrollment_id=%d revoked", eid)
+		}
+		return nil
+	}
+}
+
+// testAccWaitRevoked waits until CertSecure reports eid as revoked.
+func testAccWaitRevoked(ctx context.Context, c *client.Client, eid int64) error {
+	for {
+		d, err := c.GetEnrollmentDetails(ctx, eid)
+		if err == nil && strings.EqualFold(d.Status, "revoked") {
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+			if err != nil {
+				return fmt.Errorf("enrollment %d not revoked after destroy: %w", eid, err)
+			}
+			return fmt.Errorf("enrollment %d status = %q after destroy, want revoked", eid, d.Status)
+		case <-time.After(3 * time.Second):
+		}
+	}
+}
 
 func testAccPreCheck(t *testing.T) {
 	t.Helper()
@@ -102,25 +172,24 @@ resource "certsecure_certificate" "test" {
   tags     = ["terraform-acceptance-test"]
   notes    = "terraform-provider-certsecure acceptance test"
 
+  revoke_on_destroy = true
+
   subject_alternative_names {
     dns = [%q]
   }
 }
 `, strings.TrimSpace(testAccCSR(t, cn)), os.Getenv("CERTSECURE_TEST_CA"), os.Getenv("CERTSECURE_TEST_TEMPLATE"), "alt-"+cn)
 
+	var eids []int64
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testProviderFactories,
+		CheckDestroy:             testAccCheckRevoked(t, &eids, false),
 		Steps: []resource.TestStep{
 			{
 				Config: config,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					func(s *terraform.State) error {
-						rs := s.RootModule().Resources["certsecure_certificate.test"].Primary
-						t.Logf("issued certificate: enrollment_id=%s task_id=%s serial=%s (not revoked by this test)",
-							rs.Attributes["enrollment_id"], rs.Attributes["task_id"], rs.Attributes["serial_number"])
-						return nil
-					},
+					testAccEID(t, &eids),
 					resource.TestCheckResourceAttr("certsecure_certificate.test", "status", "active"),
 					resource.TestMatchResourceAttr("certsecure_certificate.test", "enrollment_id", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("certsecure_certificate.test", "serial_number", regexp.MustCompile(`^[0-9a-f]+$`)),
@@ -150,10 +219,24 @@ data "certsecure_certificate" "test" {
 				),
 			},
 			{
+				// Lookup by serial number (upper case) and CA finds the same enrollment.
+				Config: config + `
+data "certsecure_certificate" "test" {
+  serial_number = upper(certsecure_certificate.test.serial_number)
+  ca_name       = certsecure_certificate.test.ca_name
+}
+`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair("data.certsecure_certificate.test", "enrollment_id", "certsecure_certificate.test", "enrollment_id"),
+					resource.TestCheckResourceAttrPair("data.certsecure_certificate.test", "certificate_pem", "certsecure_certificate.test", "certificate_pem"),
+					resource.TestCheckResourceAttrPair("data.certsecure_certificate.test", "template", "certsecure_certificate.test", "template"),
+				),
+			},
+			{
 				ResourceName:            "certsecure_certificate.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"csr_pem", "owner_email", "tags", "notes", "subject_alternative_names", "task_id", "timeouts"},
+				ImportStateVerifyIgnore: []string{"csr_pem", "owner_email", "tags", "notes", "subject_alternative_names", "task_id", "timeouts", "revoke_on_destroy"},
 			},
 		},
 	})
@@ -175,19 +258,18 @@ resource "certsecure_certificate" "test" {
   template = %q
   tags     = ["terraform-acceptance-test"]
   notes    = "terraform-provider-certsecure renewal acceptance test"
+
+  revoke_on_destroy = true
 }
 `, strings.TrimSpace(csr), os.Getenv("CERTSECURE_TEST_CA"), os.Getenv("CERTSECURE_TEST_TEMPLATE"))
 	}
-	var eids []string
+	var eids []int64
 	record := func(want *rsa.PrivateKey) resource.TestCheckFunc {
 		return func(s *terraform.State) error {
-			rs := s.RootModule().Resources["certsecure_certificate.test"].Primary
-			t.Logf("certificate: enrollment_id=%s task_id=%s serial=%s (not revoked by this test)",
-				rs.Attributes["enrollment_id"], rs.Attributes["task_id"], rs.Attributes["serial_number"])
-			if slices.Contains(eids, rs.Attributes["enrollment_id"]) {
-				return fmt.Errorf("enrollment_id %s did not change", rs.Attributes["enrollment_id"])
+			if err := testAccEID(t, &eids)(s); err != nil {
+				return err
 			}
-			eids = append(eids, rs.Attributes["enrollment_id"])
+			rs := s.RootModule().Resources["certsecure_certificate.test"].Primary
 			cert, err := parseCertificatePEM(rs.Attributes["certificate_pem"])
 			if err != nil {
 				return err
@@ -206,6 +288,8 @@ resource "certsecure_certificate" "test" {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testProviderFactories,
+		// Renewal keeps the previous certificates valid, so the test revokes them.
+		CheckDestroy: testAccCheckRevoked(t, &eids, true),
 		Steps: []resource.TestStep{
 			{
 				Config: config(testAccCSRForKey(t, key, cn, cn)),
@@ -248,35 +332,14 @@ resource "certsecure_certificate" "test" {
 }
 `, strings.TrimSpace(testAccCSR(t, cn)), os.Getenv("CERTSECURE_TEST_CA"), os.Getenv("CERTSECURE_TEST_TEMPLATE"))
 
-	var eid int64
+	var eids []int64
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testProviderFactories,
 		Steps: []resource.TestStep{{
 			Config: config,
-			Check: func(s *terraform.State) error {
-				rs := s.RootModule().Resources["certsecure_certificate.test"].Primary
-				t.Logf("issued certificate: enrollment_id=%s task_id=%s serial=%s (revoked on destroy)",
-					rs.Attributes["enrollment_id"], rs.Attributes["task_id"], rs.Attributes["serial_number"])
-				var err error
-				eid, err = strconv.ParseInt(rs.Attributes["enrollment_id"], 10, 64)
-				return err
-			},
+			Check:  testAccEID(t, &eids),
 		}},
-		CheckDestroy: func(*terraform.State) error {
-			c, err := client.New(client.Config{URL: os.Getenv(envURL), Token: os.Getenv(envToken)})
-			if err != nil {
-				return err
-			}
-			d, err := c.GetEnrollmentDetails(context.Background(), eid)
-			if err != nil {
-				return err
-			}
-			if !strings.EqualFold(d.Status, "revoked") {
-				return fmt.Errorf("enrollment %d status = %q after destroy, want revoked", eid, d.Status)
-			}
-			t.Logf("enrollment_id=%d revoked", eid)
-			return nil
-		},
+		CheckDestroy: testAccCheckRevoked(t, &eids, false),
 	})
 }

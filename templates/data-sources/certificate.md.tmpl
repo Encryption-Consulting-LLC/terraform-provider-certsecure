@@ -2,7 +2,7 @@
 page_title: "{{.Name}} {{.Type}} - {{.ProviderName}}"
 subcategory: ""
 description: |-
-  Reads an existing certificate from CertSecure by its enrollment ID.
+  Reads an existing certificate from CertSecure by its enrollment ID, or by serial number and CA.
 ---
 
 # {{.Name}} ({{.Type}})
@@ -22,6 +22,9 @@ the certificate into it.
   such as `aws_acm_certificate`, takes it from where the key and CSR were created.
 - **Only issued certificates can be read.** A request that is pending or awaits approval has no certificate yet, and
   reading it fails with its status. Revoked and expired certificates can be read; check `status` and `not_after`.
+- **Lookup by serial number.** Set `serial_number` and `ca_name` instead of `enrollment_id`. Only certificates
+  requested through CertSecure enrollment can be read; a certificate that CertSecure knows only from the CA inventory
+  fails with an error.
 - **Permissions.** The CertSecure user of the API token needs *View Enrollment Database*.
 
 {{ .SchemaMarkdown | trimspace }}

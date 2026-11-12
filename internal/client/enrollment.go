@@ -207,6 +207,38 @@ func (c *Client) GetEnrollmentDetailsByTaskID(ctx context.Context, taskID string
 	return &d, nil
 }
 
+// GetEnrollmentDetailsBySerial calls GET /enrollment/enrolled_csr_details?serialNum=<serial>&ca=<ca>.
+//
+// The API accepts any spelling of the serial (case, colons, leading zero). It
+// finds the enrollment by serial alone and uses ca only to reject unregistered
+// CAs (HTTP 400), so callers must compare CertificateAuthority themselves. A
+// certificate known only from the CA inventory (not requested through
+// CertSecure enrollment) comes back without an EnrollmentID (zero). Unknown
+// serials answer HTTP 404.
+func (c *Client) GetEnrollmentDetailsBySerial(ctx context.Context, serial, ca string) (*EnrollmentDetails, error) {
+	resp, err := c.get(ctx, "/enrollment/enrolled_csr_details", url.Values{"serialNum": {serial}, "ca": {ca}}, true)
+	if err != nil {
+		return nil, err
+	}
+	// Inventory-only answers have a different shape (e.g. "EmailID": "None"),
+	// so look for the EnrollmentID before decoding the full record.
+	var probe struct {
+		EnrollmentID         *int64 `json:"EnrollmentID"`
+		CertificateAuthority string `json:"CertificateAuthority"`
+	}
+	if err := decodeJSON(resp, &probe); err != nil {
+		return nil, err
+	}
+	if probe.EnrollmentID == nil {
+		return &EnrollmentDetails{CertificateAuthority: probe.CertificateAuthority}, nil
+	}
+	var d EnrollmentDetails
+	if err := decodeJSON(resp, &d); err != nil {
+		return nil, err
+	}
+	return &d, nil
+}
+
 // DownloadCert calls GET /enrollment/download_cert?eid=<eid> and returns the
 // issued (leaf) certificate.
 //

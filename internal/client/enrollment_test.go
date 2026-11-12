@@ -246,6 +246,46 @@ func TestGetEnrollmentDetailsByTaskID(t *testing.T) {
 	}
 }
 
+func TestGetEnrollmentDetailsBySerial(t *testing.T) {
+	c, _ := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+		if q.Get("serialNum") != "3400033ba9" || q.Get("ca") != "Example Issuing CA" || q.Get("eid") != "" {
+			t.Errorf("unexpected query %s", r.URL.RawQuery)
+		}
+		writeJSON(w, 200, fixture(t, "enrolled_csr_details.json"))
+	})
+	d, err := c.GetEnrollmentDetailsBySerial(ctx(), "3400033ba9", "Example Issuing CA")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.EnrollmentID != 1477 || d.CertificateAuthority != "Example Issuing CA" || !d.CertAvailable {
+		t.Errorf("unexpected details %+v", d)
+	}
+}
+
+func TestGetEnrollmentDetailsBySerial_InventoryOnly(t *testing.T) {
+	c, _ := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, 200, fixture(t, "enrolled_csr_details_inventory.json"))
+	})
+	d, err := c.GetEnrollmentDetailsBySerial(ctx(), "3400033ba9", "Example Issuing CA")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.EnrollmentID != 0 || d.CertificateAuthority != "Example Issuing CA" {
+		t.Errorf("unexpected details %+v", d)
+	}
+}
+
+func TestGetEnrollmentDetailsBySerial_NotFound(t *testing.T) {
+	c, _ := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, 404, []byte(`{"Error": "Not Found"}`))
+	})
+	_, err := c.GetEnrollmentDetailsBySerial(ctx(), "0badc0de", "Example Issuing CA")
+	if !IsNotFound(err) {
+		t.Errorf("err = %v, want 404", err)
+	}
+}
+
 func TestEnrollmentDetails_Pending(t *testing.T) {
 	c, _ := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 200, fixture(t, "enrolled_csr_details_pending.json"))
