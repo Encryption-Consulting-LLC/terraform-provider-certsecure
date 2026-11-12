@@ -1,3 +1,16 @@
+# v1.2.0
+
+## Certificates
+
+### Features
+
+- feat: data source `certsecure_certificate` can look up a certificate by `serial_number` and `ca_name` instead of
+  `enrollment_id`. The serial number may be upper or lower case, with or without colons. `enrollment_id` is now
+  optional and filled in by the lookup.
+- feat: new `certsecure_certificate` argument `wait_for_approval` (default `false`). When `true`, an apply whose new
+  certificate or renewal awaits approval in CertSecure waits until it is approved and issued, denied, or the `create`
+  (`update` for renewals) timeout expires, so an approval within the timeout needs no `terraform untaint`.
+
 # v1.1.0
 
 ## Certificates

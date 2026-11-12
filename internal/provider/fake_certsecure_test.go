@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -91,6 +92,14 @@ type fakeCertSecure struct {
 	// availableCAUnauthorized makes /available_ca answer 401 while the token
 	// check still succeeds.
 	availableCAUnauthorized bool
+	// inventoryOnly maps serial numbers (lowercase hex, no leading zeros) of
+	// certificates known only from the CA inventory to their CA.
+	inventoryOnly map[string]string
+	// decideAfterPolls, when non-zero, makes a request awaiting approval
+	// (modeApproval) get decided once its task has been polled that often:
+	// approved and issued, or denied if denyApproval is set.
+	decideAfterPolls int
+	denyApproval     bool
 
 	// Issued certificates are valid from issueAt for validity.
 	issueAt  time.Time
@@ -417,6 +426,18 @@ func (f *fakeCertSecure) handle(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case e.polls == 1:
 			info, status, details = "INITIALIZED", "Task has been created", "Task Created"
+		case e.mode == modeApproval && f.decideAfterPolls > 0 && e.polls >= f.decideAfterPolls:
+			if f.denyApproval {
+				e.mode = modeDenied
+				info, status, details = "ERROR", "Denied By Approver", "Certificate request was denied by an approver."
+				e.status = "denied"
+				break
+			}
+			e.mode = modeIssue
+			if e.cert == nil {
+				f.issue(e)
+			}
+			info, status, details = "OK", "Certificate Issued", fmt.Sprintf("Certificate request for enrollment ID %d has been Issued", e.eid)
 		case e.mode == modeApproval:
 			info, status, details = "PENDING", "Pending Approval by Admin", "Certificate has to be approved by: 1 Approver"
 			e.status = "requested"
@@ -443,6 +464,33 @@ func (f *fakeCertSecure) handle(w http.ResponseWriter, r *http.Request) {
 		if tid := q.Get("taskID"); tid != "" {
 			if e = f.byTask[tid]; e == nil || e.eid == 0 {
 				writeJSONResp(w, 500, map[string]any{"detail": map[string]any{}, "message": "Internal Server Error"})
+				return
+			}
+		} else if sn := q.Get("serialNum"); sn != "" {
+			// Like CertSecure: ca must be a registered CA, but the serial is matched on any CA.
+			if ca := q.Get("ca"); !strings.EqualFold(ca, "Example Issuing CA") && !strings.EqualFold(ca, "Other Issuing CA") {
+				writeJSONResp(w, 400, map[string]string{"Error": ca + " - is not a registered CA."})
+				return
+			}
+			want, ok := new(big.Int).SetString(strings.ToLower(sn), 16)
+			if !ok {
+				writeJSONResp(w, 404, map[string]string{"Error": "Not Found"})
+				return
+			}
+			if ca, ok := f.inventoryOnly[want.Text(16)]; ok {
+				writeJSONResp(w, 200, map[string]any{
+					"Serial Number": want.Text(16), "CertificateAuthority": ca, "Template": "WebServer", "Status": "active",
+					"EmailID": "None", "commonName": "inventory.example.com", "san": "", "sanDNSNames": []string{},
+				})
+				return
+			}
+			for _, cand := range f.byEID {
+				if cand.cert != nil && cand.cert.SerialNumber.Cmp(want) == 0 {
+					e = cand
+				}
+			}
+			if e == nil {
+				writeJSONResp(w, 404, map[string]string{"Error": "Not Found"})
 				return
 			}
 		} else {

@@ -160,7 +160,8 @@ Renewals that need approval do not submit twice. If CertSecure requires approval
 and `pending_renewal_task_id` records it, while the previous certificate stays in state and in use. Approve or deny
 the request in CertSecure, then run `apply` again: it resumes the same request. If the request was denied, the next
 `apply` submits a new renewal. Changing `csr_pem` again while a renewal is pending is refused until that request is
-approved or denied. The same applies when a renewal does not complete before the `update` timeout.
+approved or denied. The same applies when a renewal does not complete before the `update` timeout. With
+`wait_for_approval = true`, the apply waits for the approval instead (see below).
 
 Things to know:
 
@@ -214,7 +215,32 @@ revoked.
 
 ## Approval and Resuming a New Certificate
 
-If the template requires approval, creation fails with an error that includes the enrollment ID (eid) and task ID.
+### Waiting for approval
+
+Set `wait_for_approval = true` to let the apply wait while a request awaits approval, and give it a timeout long
+enough for your approval process. If an approver approves the request before the timeout, the apply completes
+normally, with no error and no `terraform untaint`. If the request is denied, the apply fails. If the timeout expires
+first, the apply fails as described below and the request can be resumed. The setting applies to new certificates
+(`create` timeout) and renewals (`update` timeout). The provider never approves or denies requests.
+
+```terraform
+resource "certsecure_certificate" "app" {
+  # ...
+  wait_for_approval = true
+
+  timeouts {
+    create = "2h"
+    update = "2h"
+  }
+}
+```
+
+The apply holds the Terraform run (and its state lock) while it waits, so prefer this for approvals that happen
+within a run, for example a reviewer who approves as part of a change.
+
+### Resuming a request
+
+If the template requires approval and `wait_for_approval` is `false` (the default), creation fails with an error that includes the enrollment ID (eid) and task ID.
 The request is saved in state with no certificate yet, and stays in CertSecure where it can be approved or denied.
 The same happens when issuance does not complete before the `create` timeout, or the certificate cannot be
 downloaded.
@@ -269,6 +295,7 @@ removes it from state with a warning and does not cancel the request.
 - `subject_alternative_names` (Block, Optional) Subject alternative names to request in addition to (or, with `override_csr_sans`, instead of) those in the CSR. Whether the CA honors requested SANs depends on its template and policy settings. (see [below for nested schema](#nestedblock--subject_alternative_names))
 - `tags` (List of String) Tags recorded on the certificate in CertSecure. Changing tags issues a new certificate.
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
+- `wait_for_approval` (Boolean) When `true`, an apply whose request awaits approval in CertSecure keeps waiting until the request is approved and issued, denied, or the `create` (or, for renewals, `update`) timeout expires. Set a timeout long enough for your approval process. Defaults to `false`: the apply stops with an error as soon as the request awaits approval, and a later apply resumes it. The provider never approves or denies requests.
 
 ### Read-Only
 

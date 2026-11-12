@@ -98,13 +98,14 @@ Key behaviors (details in the [resource documentation](docs/resources/certificat
 * Destroy revokes the certificate only with `revoke_on_destroy = true` (default `false`).
 * Templates that require approval are supported. A renewal that awaits approval resumes on the next `apply`; a new
   certificate that awaits approval resumes after `terraform untaint` (otherwise Terraform replaces it and submits a
-  new request). Errors include the enrollment ID and task ID.
+  new request). With `wait_for_approval = true`, the apply waits for the approval up to its timeout instead. Errors
+  include the enrollment ID and task ID.
 
 ## Compatibility
 
 | CertSecure Manager Version | Terraform Provider Version |
 |----------------------------|----------------------------|
-| 3.4                        | 1.0.x, 1.1.x               |
+| 3.4                        | 1.0.x, 1.1.x, 1.2.x        |
 
 ## Requirements
 
@@ -143,9 +144,9 @@ Download a pre-built release and install it into Terraform's local filesystem mi
 ~/.terraform.d/plugins/registry.terraform.io/encryption-consulting-llc/certsecure/<VERSION>/<OS>_<ARCH>/terraform-provider-certsecure_v<VERSION>
 ```
 
-Example for Linux amd64, version 1.1.0:
+Example for Linux amd64, version 1.2.0:
 ```bash
-PROVIDER_VERSION="1.1.0"
+PROVIDER_VERSION="1.2.0"
 OS_ARCH="linux_amd64"                  # or linux_arm64 / darwin_amd64 / darwin_arm64
 PLUGIN_DIR="${HOME}/.terraform.d/plugins/registry.terraform.io/encryption-consulting-llc/certsecure/${PROVIDER_VERSION}/${OS_ARCH}"
 mkdir -p "${PLUGIN_DIR}"
@@ -155,7 +156,7 @@ chmod +x "${PLUGIN_DIR}/terraform-provider-certsecure_v${PROVIDER_VERSION}"
 
 **Windows (PowerShell)**
 ```powershell
-$ProviderVersion = "1.1.0"
+$ProviderVersion = "1.2.0"
 $OSArch = "windows_amd64"              # or windows_arm64
 $PluginDir = "$env:APPDATA\terraform.d\plugins\registry.terraform.io\encryption-consulting-llc\certsecure\$ProviderVersion\$OSArch"
 New-Item -ItemType Directory -Force -Path $PluginDir
@@ -169,7 +170,7 @@ terraform {
   required_providers {
     certsecure = {
       source  = "encryption-consulting-llc/certsecure"
-      version = "1.1.0"
+      version = "1.2.0"
     }
   }
 }

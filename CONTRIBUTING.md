@@ -93,7 +93,9 @@ Resource and data source tests run the real Terraform CLI against an in-memory f
 
 ### Acceptance tests
 
-Acceptance tests run against a real CertSecure deployment and **issue real certificates**, which are not revoked.
+Acceptance tests run against a real CertSecure deployment and **issue real certificates**. Each test revokes the
+certificates it issued when it ends and checks that they are revoked. A test that fails before destroy can leave a
+certificate active; its enrollment ID is in the test log.
 
 ```shell
 make testacc
@@ -107,8 +109,8 @@ The following environment variables must be set:
 * `CERTSECURE_TEST_TEMPLATE`: template name. It must issue without approval, and the token's role must be allowed to
   submit CSRs with it.
 
-In CI, acceptance tests run only from the manually triggered `Acceptance Tests` workflow using the protected
-`acceptance` environment, never for pull requests.
+The token's role must also be allowed to revoke certificates. Acceptance tests never run in this repository's CI;
+the maintainers run them against a CertSecure deployment before every release.
 
 ### Test data hygiene
 

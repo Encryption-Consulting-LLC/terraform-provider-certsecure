@@ -16,7 +16,7 @@ are replaced with `example` values. Structure and field names are unchanged.
 | `enroll_csr_400_invalid_csr.json` | `POST /enrollment/enroll_csr` with a malformed CSR |
 | `enroll_csr_400_generic.json` | `POST /enrollment/enroll_csr` with `san_attributes` sent as an object |
 | `task_processing.json`, `task_ok.json`, `task_404.json` | `GET /tasks?taskID=` |
-| `enrolled_csr_details*.json` | `GET /enrollment/enrolled_csr_details` (issued, pending, with SANs, 404) |
+| `enrolled_csr_details*.json` | `GET /enrollment/enrolled_csr_details` (issued, pending, with SANs, 404; by serial for a certificate known only from the CA inventory) |
 | `view_trust_chain.json` | `GET /enrollment/view-trust-chain?eid=` |
 | `download_cert_400.json`, `download_400_type.json` | download endpoints with missing/unsupported parameters |
 | `inventory_cert_details*.json` | `GET /inventory/cert_details` (found / 404) |

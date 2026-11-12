@@ -37,7 +37,7 @@ Report security vulnerabilities privately, as described in the repository's `SEC
 
 | CertSecure Manager Version | Terraform Provider Version |
 |----------------------------|----------------------------|
-| 3.4                        | 1.0.x, 1.1.x               |
+| 3.4                        | 1.0.x, 1.1.x, 1.2.x        |
 
 ## Authentication
 
