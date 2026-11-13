@@ -1,3 +1,23 @@
+# v1.2.1
+
+## Certificates
+
+### Documentation
+
+- docs: new guide "Protecting the Private Key in Terraform State": which resources store the private key in state,
+  how to protect the state, the conflict with key export policies, and keeping the key out of state with write-only
+  arguments (`tls_cert_request`, `aws_acm_certificate`, `kubernetes_secret_v1`).
+- docs: delivery guides with complete configurations for AWS Certificate Manager (with an Application Load Balancer
+  listener), Azure Key Vault (PEM import) and Kubernetes (TLS secret for an Ingress): how renewal, key rotation,
+  replacement and revocation reach each destination. The provider overview lists the guides.
+- docs: the AWS Certificate Manager guide notes that `aws_acm_certificate.not_after` can show the previous expiry
+  date until the next run after a renewal.
+- docs: import with an `import` block, finding the enrollment ID from a serial number with the `certsecure_certificate`
+  data source, and which settings the first apply after an import records.
+- docs: README links the certificate data source and the guides; the install example uses `~> 1.2`.
+- docs: new troubleshooting guide: connection and authentication errors, requests refused by CertSecure, approvals,
+  timeouts, downloads, destroy warnings and data source lookups, each with what to do and what the next apply does.
+
 # v1.2.0
 
 ## Certificates

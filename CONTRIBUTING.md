@@ -139,5 +139,6 @@ Releases are made by the maintainers.
    pushes the tag. Only maintainers can create `v*` tags.
 3. The `Release` workflow runs in the protected `release` environment and waits for a maintainer's approval. It then
    builds with GoReleaser and publishes a GitHub release with the zip archives, `SHA256SUMS`, its detached GPG
-   signature, and the registry manifest. The signing key is stored only in that environment.
+   signature, and the registry manifest. The signing key is stored only in that environment. The release notes are
+   the version's section of `CHANGELOG.md`; the workflow fails before building if that section is missing or empty.
 4. The Terraform Registry publishes the new version from the GitHub release.

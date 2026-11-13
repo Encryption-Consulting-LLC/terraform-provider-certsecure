@@ -111,6 +111,8 @@ output "serial_number" {
 ```terraform
 # Deliver the certificate with the destination's own provider, here AWS
 # Certificate Manager. Renewals re-import into the same ACM certificate (ARN).
+# The private key is stored in Terraform state by tls_private_key,
+# tls_cert_request and aws_acm_certificate: see the state security guide.
 resource "tls_private_key" "web" {
   algorithm = "RSA"
   rsa_bits  = 2048
@@ -138,6 +140,11 @@ resource "aws_acm_certificate" "web" {
   certificate_chain = certsecure_certificate.web.chain_pem
 }
 ```
+
+Complete delivery examples are in the guides for
+[AWS Certificate Manager](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/guides/aws-acm),
+[Azure Key Vault](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/guides/azure-key-vault)
+and [Kubernetes](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/guides/kubernetes).
 
 ## Renewal
 
@@ -268,11 +275,15 @@ removes it from state with a warning and does not cancel the request.
 ## Important Notes
 
 - **Errors identify the request.** When creation fails after the request was submitted, the error contains the
-  enrollment ID (eid) and task ID so the request can be found, approved, denied or revoked in CertSecure. If the
+  enrollment ID (eid) and task ID so the request can be found, approved, denied or revoked in CertSecure. The
+  [troubleshooting guide](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/guides/troubleshooting)
+  explains each error and what the next apply does. If the
   enrollment ID was not known yet, nothing is saved in state and the next `apply` submits a new request.
 - **Protect your state.** A private key generated with the `tls_private_key` resource is stored in Terraform state
-  in plain text. Store state in an encrypted, access-controlled backend, or generate the key and CSR outside
-  Terraform and pass only the CSR.
+  in plain text, and so is a key passed to `tls_cert_request` or a destination such as `aws_acm_certificate`. Store
+  state in an encrypted, access-controlled backend, or keep the key out of state with write-only arguments or by
+  generating the key and CSR outside Terraform. See the
+  [state security guide](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/guides/state-security).
 - **Subject alternative names.** Whether the CA honors SANs requested in `subject_alternative_names` (instead of only
   those in the CSR) depends on the CA and template configuration.
 
@@ -339,8 +350,25 @@ Import is supported using the following syntax, where the ID is the CertSecure e
 terraform import certsecure_certificate.app 1477
 ```
 
+With Terraform 1.5 and later, an `import` block does the same as part of `terraform plan` and `apply`:
+
+```terraform
+import {
+  to = certsecure_certificate.app
+  id = "1477"
+}
+```
+
+The enrollment ID is shown in CertSecure. To find it from a serial number, use the
+[`certsecure_certificate` data source](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/data-sources/certificate)
+with `serial_number` and `ca_name`; its `enrollment_id` attribute is the import ID. Only certificates enrolled
+through CertSecure have an enrollment ID.
+
 Import reads the certificate, chain, status, `ca_name` and `template` from CertSecure. The CSR, tags, notes, owner
-email and requested SANs cannot be recovered, and `task_id` is not available.
+email and requested SANs cannot be recovered, and `task_id` is not available. `revoke_on_destroy`,
+`wait_for_approval` and `early_renewal_hours` start at their defaults; the first apply records the values in the
+configuration without renewing or replacing the certificate (unless the certificate is already within the configured
+`early_renewal_hours`, which renews it).
 
 After import, the first apply records `csr_pem` from the configuration. If the CSR is for the same key as the
 imported certificate, nothing is issued. If it is for a different key, the certificate is renewed with it. To keep
