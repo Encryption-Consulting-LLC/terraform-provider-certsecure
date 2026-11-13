@@ -52,8 +52,15 @@ block override environment variables.
 * [Documentation](docs/index.md)
 * Examples
     * [Certificate Resource](docs/resources/certificate.md)
+    * [Certificate Data Source](docs/data-sources/certificate.md)
     * [CAs Data Source](docs/data-sources/cas.md)
     * [Templates Data Source](docs/data-sources/templates.md)
+* Guides
+    * [AWS Certificate Manager](docs/guides/aws-acm.md)
+    * [Azure Key Vault](docs/guides/azure-key-vault.md)
+    * [Kubernetes](docs/guides/kubernetes.md)
+    * [Protecting the private key in Terraform state](docs/guides/state-security.md)
+    * [Troubleshooting](docs/guides/troubleshooting.md)
 * [Contributing](CONTRIBUTING.md)
 * [License](LICENSE)
 
@@ -125,7 +132,7 @@ terraform {
   required_providers {
     certsecure = {
       source  = "encryption-consulting-llc/certsecure"
-      version = "~> 1.0"
+      version = "~> 1.2"
     }
   }
 }
@@ -144,9 +151,9 @@ Download a pre-built release and install it into Terraform's local filesystem mi
 ~/.terraform.d/plugins/registry.terraform.io/encryption-consulting-llc/certsecure/<VERSION>/<OS>_<ARCH>/terraform-provider-certsecure_v<VERSION>
 ```
 
-Example for Linux amd64, version 1.2.0:
+Example for Linux amd64, version 1.2.1:
 ```bash
-PROVIDER_VERSION="1.2.0"
+PROVIDER_VERSION="1.2.1"
 OS_ARCH="linux_amd64"                  # or linux_arm64 / darwin_amd64 / darwin_arm64
 PLUGIN_DIR="${HOME}/.terraform.d/plugins/registry.terraform.io/encryption-consulting-llc/certsecure/${PROVIDER_VERSION}/${OS_ARCH}"
 mkdir -p "${PLUGIN_DIR}"
@@ -156,7 +163,7 @@ chmod +x "${PLUGIN_DIR}/terraform-provider-certsecure_v${PROVIDER_VERSION}"
 
 **Windows (PowerShell)**
 ```powershell
-$ProviderVersion = "1.2.0"
+$ProviderVersion = "1.2.1"
 $OSArch = "windows_amd64"              # or windows_arm64
 $PluginDir = "$env:APPDATA\terraform.d\plugins\registry.terraform.io\encryption-consulting-llc\certsecure\$ProviderVersion\$OSArch"
 New-Item -ItemType Directory -Force -Path $PluginDir
@@ -170,7 +177,7 @@ terraform {
   required_providers {
     certsecure = {
       source  = "encryption-consulting-llc/certsecure"
-      version = "1.2.0"
+      version = "1.2.1"
     }
   }
 }

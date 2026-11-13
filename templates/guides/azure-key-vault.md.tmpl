@@ -1,0 +1,65 @@
+---
+page_title: "Delivering Certificates to Azure Key Vault"
+subcategory: ""
+description: |-
+  Issue a certificate from Microsoft CA through CertSecure and import it into Azure Key Vault as a PEM certificate.
+---
+
+# Delivering Certificates to Azure Key Vault
+
+This guide issues a certificate from Microsoft CA through CertSecure and imports it into Azure Key Vault with the
+Azure provider's `azurerm_key_vault_certificate`.
+
+```
+tls_private_key → tls_cert_request → certsecure_certificate → azurerm_key_vault_certificate
+```
+
+The CertSecure provider never talks to Azure. It issues and renews the certificate; the Azure provider imports it.
+
+## Example
+
+{{ tffile "examples/guides/azure-key-vault/main.tf" }}
+
+## The PEM contents
+
+Key Vault imports a PEM certificate when the `certificate_policy` sets `content_type = "application/x-pem-file"`.
+`contents` must hold the private key in PKCS#8 format followed by the certificate and its chain, which is why the
+example uses `private_key_pem_pkcs8` and joins it with `certificate_pem` and `chain_pem`. Despite the attribute
+description ("base64-encoded"), PEM text is passed as it is.
+
+## Renewal creates a new version
+
+When `certsecure_certificate` renews (the certificate expires within `early_renewal_hours`, or `csr_pem` changes), the
+`contents` change in the same apply, and `azurerm_key_vault_certificate` imports them as a **new version of the same
+Key Vault certificate**. The plan shows an in-place update.
+
+`versionless_id` and `versionless_secret_id` do not change. Services that reference the certificate without a version,
+such as Application Gateway or App Service, pick up the new version on their own. Services that reference a specific
+version (`id`, `secret_id`) are updated by Terraform in the same apply when they are in the same configuration.
+
+Renewal only happens when Terraform runs. Run `terraform apply` on a schedule, with an `early_renewal_hours` window
+that covers missed runs.
+
+## Rotating the key
+
+To renew with a new key, replace the key: for example `terraform apply -replace=tls_private_key.app`, or a
+`replace_triggered_by` on a version value. The new key gives a new CSR, `certsecure_certificate` renews with it, and
+Key Vault imports the new key and certificate as a new version.
+
+## Replacement and revocation
+
+Changing `ca_name`, `template` or another argument that cannot be renewed issues a new certificate. With
+`create_before_destroy`, the new certificate is issued and imported before the old one is revoked
+(`revoke_on_destroy = true`).
+
+## Things to know
+
+- **Permissions.** The identity running Terraform needs to import and read certificates in the vault, for example the
+  *Key Vault Certificates Officer* role with Azure RBAC, or the `Import`, `Get`, `List` and `Delete` certificate
+  permissions with access policies.
+- **Destroy.** Destroying `azurerm_key_vault_certificate` soft-deletes it when soft delete is enabled on the vault. A
+  certificate with the same name cannot be created again until it is purged or recovered; see the Azure provider's
+  `key_vault` features block.
+- **State.** The private key is stored in state by `tls_private_key`, `tls_cert_request` and
+  `azurerm_key_vault_certificate` (in `certificate.contents`). See the
+  [state security guide](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/guides/state-security).

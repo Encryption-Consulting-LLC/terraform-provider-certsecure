@@ -25,6 +25,14 @@ Below are the currently supported resources and data sources:
 | CA templates                 | [certsecure_templates](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/data-sources/templates) |
 | Certificate lookup           | [certsecure_certificate](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/data-sources/certificate) (data source) |
 
+Delivery to the systems that use the certificate is done by their own Terraform providers. Guides:
+
+- [AWS Certificate Manager](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/guides/aws-acm) (with an Application Load Balancer)
+- [Azure Key Vault](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/guides/azure-key-vault)
+- [Kubernetes](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/guides/kubernetes) (TLS secret for an Ingress)
+- [Protecting the private key in Terraform state](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/guides/state-security)
+- [Troubleshooting](https://registry.terraform.io/providers/encryption-consulting-llc/certsecure/latest/docs/guides/troubleshooting): errors and warnings, approvals, timeouts
+
 ## Support
 
 The provider is developed and supported by Encryption Consulting for CertSecure Manager customers. For help, contact

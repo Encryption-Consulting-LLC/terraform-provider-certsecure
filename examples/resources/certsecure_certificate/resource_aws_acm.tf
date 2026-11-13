@@ -1,5 +1,7 @@
 # Deliver the certificate with the destination's own provider, here AWS
 # Certificate Manager. Renewals re-import into the same ACM certificate (ARN).
+# The private key is stored in Terraform state by tls_private_key,
+# tls_cert_request and aws_acm_certificate: see the state security guide.
 resource "tls_private_key" "web" {
   algorithm = "RSA"
   rsa_bits  = 2048

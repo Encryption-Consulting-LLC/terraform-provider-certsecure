@@ -253,6 +253,51 @@ func TestCertificateResource_PlanValidation(t *testing.T) {
 	}
 }
 
+// After import, the first apply records revoke_on_destroy, wait_for_approval,
+// early_renewal_hours (outside the window) and the CSR for the same key without
+// issuing or renewing.
+func TestCertificateResource_ImportThenApplySettings(t *testing.T) {
+	f := newFakeCertSecure(t)
+	csr := testCSR(t, "import.example.com")
+	settings := "  revoke_on_destroy   = true\n  wait_for_approval   = true\n  early_renewal_hours = 24\n"
+	// Issue the certificate; destroy only removes it from state (the default).
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testProviderFactories,
+		Steps:                    []resource.TestStep{{Config: certificateConfig(f.srv.URL, csr, "")}},
+	})
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             certificateConfig(f.srv.URL, csr, ""),
+				ResourceName:       "certsecure_certificate.test",
+				ImportState:        true,
+				ImportStateId:      "1501",
+				ImportStatePersist: true,
+			},
+			{
+				Config: certificateConfig(f.srv.URL, csr, settings),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("certsecure_certificate.test", "enrollment_id", "1501"),
+					resource.TestCheckResourceAttr("certsecure_certificate.test", "revoke_on_destroy", "true"),
+					resource.TestCheckResourceAttr("certsecure_certificate.test", "wait_for_approval", "true"),
+					resource.TestCheckResourceAttr("certsecure_certificate.test", "early_renewal_hours", "24"),
+				),
+			},
+			{
+				Config:   certificateConfig(f.srv.URL, csr, settings),
+				PlanOnly: true,
+			},
+		},
+	})
+	if n := f.enrollCount(); n != 1 {
+		t.Fatalf("enroll_csr called %d times, want 1", n)
+	}
+	if n := f.renewCount(); n != 0 {
+		t.Fatalf("renew_csr called %d times, want 0", n)
+	}
+}
+
 func TestCertificateResource_ImportInvalidID(t *testing.T) {
 	f := newFakeCertSecure(t)
 	resource.UnitTest(t, resource.TestCase{
